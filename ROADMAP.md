@@ -3,7 +3,7 @@
 ## Milestone 1: Core Layout Engine (v0.1.0) — Current Focus
 
 - [x] Basic layout generation (Pillow)
-- [ ] Data-driven Layout Engine (Resolution, SafeZone, dynamic
+- [X] Data-driven Layout Engine (Resolution, SafeZone, dynamic
   bounding box)
 - [ ] Out-of-the-box presets:
   - Desktop 2K (2560x1440, icon margin)

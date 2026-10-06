@@ -54,6 +54,15 @@ uv run python main.py
 
 Generated assets are placed into the `screensavers/` directory.
 
+### Run Tests & Quality Gates
+
+Run static analysis and the automated test suite:
+
+```bash
+uv run ruff check .
+uv run pytest -v
+```
+
 ---
 
 ## Tech Stack
