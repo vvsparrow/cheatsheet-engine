@@ -1,5 +1,7 @@
 """Domain models for device screen geometry and layout safe zones."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 
@@ -19,6 +21,24 @@ class Resolution:
     def aspect_ratio(self) -> float:
         """Calculate aspect ratio (width / height)."""
         return self.width / self.height
+
+    def get_safe_area(self, safe_zone: SafeZone) -> BoundingBox:
+        """Calculate the usable content bounding box within safe margins.
+
+        Args:
+            safe_zone: Safe zone padding to subtract  from boundaries.
+
+        Returns:
+            BoundingBox representing the usable drawing area.
+        """
+        usable_width = self.width - (safe_zone.left + safe_zone.right)
+        usable_height = self.height - (safe_zone.top + safe_zone.bottom)
+        return BoundingBox(
+            x=safe_zone.left,
+            y=safe_zone.top,
+            width=usable_width,
+            height=usable_height,
+        )
 
 
 @dataclass(frozen=True, slots=True)

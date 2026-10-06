@@ -64,3 +64,24 @@ def test_bounding_box_immutability() -> None:
     box = BoundingBox(x=10, y=10, width=100, height=100)
     with pytest.raises(FrozenInstanceError):
         box.x = 50  #  type: ignore
+
+
+def test_resolution_get_safe_area_valid() -> None:
+    """Ensure get_safe_area computes correct usable BoundingBox."""
+    res = Resolution(width=1920, height=1080)
+    sz = SafeZone(top=80, bottom=80, left=120, right=120)
+    box = res.get_safe_area(sz)
+
+    assert box.x == 120
+    assert box.y == 80
+    assert box.width == 1680
+    assert box.height == 920
+
+
+def test_resolution_get_safe_area_exceeds_dimensions() -> None:
+    """Ensure get_safe_area raises ValueError if safe zone exceeds canvas."""
+    res = Resolution(width=100, height=100)
+    sz = SafeZone(top=60, bottom=50, left=10, right=10)
+
+    with pytest.raises(ValueError, match="strictly positive"):
+        res.get_safe_area(sz)
