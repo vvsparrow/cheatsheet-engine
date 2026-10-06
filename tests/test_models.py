@@ -4,7 +4,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from core import Resolution, SafeZone
+from core import BoundingBox, Resolution, SafeZone
 
 
 def test_resolution_creation() -> None:
@@ -37,3 +37,30 @@ def test_safe_zone_creation_and_immutability() -> None:
 
     with pytest.raises(FrozenInstanceError):
         sz.top = 100  # type: ignore
+
+
+def test_bounding_box_creation_and_boundaries() -> None:
+    """Ensure BoundingBox calculates right and bottom boundaries."""
+    box = BoundingBox(x=100, y=150, width=800, height=600)
+    assert box.x == 100
+    assert box.y == 150
+    assert box.width == 800
+    assert box.height == 600
+    assert box.right == 900
+    assert box.bottom == 750
+
+
+def test_bounding_box_invalid_dimensions_raise_error() -> None:
+    """Ensure BoundingBox rejects non-positive dimensions."""
+    with pytest.raises(ValueError, match="strictly positive"):
+        BoundingBox(x=0, y=0, width=0, height=100)
+
+    with pytest.raises(ValueError, match="strictly positive"):
+        BoundingBox(x=0, y=0, width=100, height=-5)
+
+
+def test_bounding_box_immutability() -> None:
+    """Ensure BoundingBox cannot be mutated (frozen dataclass)."""
+    box = BoundingBox(x=10, y=10, width=100, height=100)
+    with pytest.raises(FrozenInstanceError):
+        box.x = 50  #  type: ignore

@@ -36,3 +36,35 @@ class SafeZone:
     bottom: int
     left: int
     right: int
+
+
+@dataclass(frozen=True, slots=True)
+class BoundingBox:
+    """Axis-Aligned Bounding Box representing a rectangular layout area.
+
+    Attributes:
+        x: Top-left X coordinate in pixels.
+        y: Top-left Y coordinate in pixels.
+        width: Width in pixels (must be positive).
+        height: Height in pixels (must be positive).
+    """
+
+    x: int
+    y: int
+    width: int
+    height: int
+
+    def __post_init__(self) -> None:
+        """Validate box dimensions."""
+        if self.width <= 0 or self.height <= 0:
+            raise ValueError("BoundingBox width and height must be strictly positive.")
+
+    @property
+    def right(self) -> int:
+        """Calculate right boundary X coordinate."""
+        return self.x + self.width
+
+    @property
+    def bottom(self) -> int:
+        """Calculate bottom boundary Y coordinate."""
+        return self.y + self.height
