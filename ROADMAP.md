@@ -5,12 +5,16 @@
 - [x] Basic layout generation (Pillow)
 - [X] Data-driven Layout Engine (Resolution, SafeZone, dynamic
   bounding box)
-- [ ] Out-of-the-box presets:
+- [X] Out-of-the-box presets:
   - Desktop 2K (2560x1440, icon margin)
   - Laptop Full HD (1920x1080, 16:9 grid)
   - Tablet / iPad (2048x2732, 3:4 portrait)
   - Phone Panorama (3240x2412, 3 screens)
   - Phone Lockscreen (1290x2796, Safe Zone: top 38%, bottom 15%)
+- [ ] Engine Migration & Dynamic Layout (Issue #6):
+  - Dynamic column widths (no hardcoded offsets)
+  - Zero-clipping text wrapping and auto-scaling
+  - Cross-platform font fallback
 
 ## Milestone 2: Quality Gates (v0.2.0)
 

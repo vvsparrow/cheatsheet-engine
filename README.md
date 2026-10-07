@@ -61,6 +61,7 @@ Run static analysis and the automated test suite:
 ```bash
 uv run ruff check .
 uv run pytest -v
+uv run pyright
 ```
 
 ---
@@ -72,3 +73,4 @@ uv run pytest -v
 - **Pytest** — Automated geometry validation and text collision tests
 - **Ruff** — Static code analysis, linting, and formatting
 - **uv** — Fast dependency and virtual environment management
+- **Pyright** — Static type checking and contract validation
