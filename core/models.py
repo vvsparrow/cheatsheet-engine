@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 
@@ -88,3 +89,44 @@ class BoundingBox:
     def bottom(self) -> int:
         """Calculate bottom boundary Y coordinate."""
         return self.y + self.height
+
+
+@dataclass(frozen=True, slots=True)
+class TableData:
+    """Arbitrary tabular dataset schema with shape validation.
+
+    Attributes:
+        headers: Column header names.
+        rows: Row entries matching header column count.
+    """
+
+    headers: Sequence[str]
+    rows: Sequence[Sequence[str]]
+
+    def __post_init__(self) -> None:
+        """Validate tabular structure and enforce immutable tuples."""
+        if not self.headers:
+            raise ValueError("Headers cannot be empty.")
+
+        normalized_headers = tuple(self.headers)
+        normalized_rows = tuple(tuple(row) for row in self.rows)
+
+        col_count = len(normalized_headers)
+        for row in normalized_rows:
+            if len(row) != col_count:
+                raise ValueError(
+                    "Row length mismatch: every row must match column count."
+                )
+
+        object.__setattr__(self, "headers", normalized_headers)
+        object.__setattr__(self, "rows", normalized_rows)
+
+    @property
+    def column_count(self) -> int:
+        """Return total number of columns."""
+        return len(self.headers)
+
+    @property
+    def row_count(self) -> int:
+        """Return total number of rows."""
+        return len(self.rows)

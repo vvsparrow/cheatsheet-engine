@@ -1,6 +1,6 @@
 """Core domain package for cheatsheet engine."""
 
-from core.models import BoundingBox, Resolution, SafeZone
+from core.models import BoundingBox, Resolution, SafeZone, TableData
 from core.presets import (
     DESKTOP_2K,
     IPAD_PORTRAIT,
@@ -20,4 +20,5 @@ __all__ = [
     "DevicePreset",
     "Resolution",
     "SafeZone",
+    "TableData",
 ]
