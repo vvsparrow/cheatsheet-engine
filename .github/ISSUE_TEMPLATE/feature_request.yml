@@ -1,0 +1,32 @@
+name: Feature Request
+description: Suggest an idea or enhancement for cheatsheet-engine
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for suggesting an idea! Please explain the problem you are facing and your proposed solution."
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Description
+      description: Is your feature request related to a problem? Please describe it.
+      placeholder: A clear and concise description of the problem...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution or behavior you would like to see.
+      placeholder: Describe the ideal implementation or feature behavior...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative solutions or features you have considered.
+      placeholder: Any workarounds or alternative approaches...
+    validations:
+      required: false

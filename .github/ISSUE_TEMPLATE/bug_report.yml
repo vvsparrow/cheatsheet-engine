@@ -1,0 +1,44 @@
+name: Bug Report
+description: File a bug report to help us improve cheatsheet-engine
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for taking the time to report an issue! Please provide as much detail as possible."
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of the issue.
+      placeholder: Describe what happened...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the unexpected behavior.
+      placeholder: |
+        1. Run command '...'
+        2. With parameters '...'
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Info
+      description: Operating System, Python version, and relevant dependencies.
+      placeholder: |
+        - OS: Linux Mint 22.3
+        - Python version: 3.13
+    validations:
+      required: true
