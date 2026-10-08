@@ -11,7 +11,7 @@
   - Tablet / iPad (2048x2732, 3:4 portrait)
   - Phone Panorama (3240x2412, 3 screens)
   - Phone Lockscreen (1290x2796, Safe Zone: top 38%, bottom 15%)
-- [ ] Engine Migration & Dynamic Layout (Issue #6):
+- [ ] Engine Migration & Dynamic Layout:
   - Dynamic column widths (no hardcoded offsets)
   - Zero-clipping text wrapping and auto-scaling
   - Cross-platform font fallback
@@ -21,6 +21,10 @@
 - [ ] Automated test suite (Pytest)
 - [ ] Collision detection (text overlaps via font metrics)
 - [ ] Boundary & Safe Zone assertions
+- [ ] Defensive Layout (Word wrapping, text truncation with ellipsis)
+- [ ] Visual Regression Testing (Snapshot / pixel-diff assertions)
+- [ ] Structured Logging & Observability (render metrics, layout reports)
+- [ ] CI/CD Pipeline (GitHub Actions: Linux, macOS, Windows)
 
 ## Milestone 3: Standalone Operator Tool (v0.3.0)
 
