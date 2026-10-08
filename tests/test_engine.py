@@ -3,12 +3,20 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
+from pathlib import Path
 
 import pytest
+from PIL import Image
 from PIL.ImageFont import FreeTypeFont
 
-from core.engine import calculate_column_widths, get_font
-from core.models import TableData
+from core.engine import (
+    calculate_column_widths,
+    calculate_rows_per_page,
+    get_font,
+    render_wallpaper,
+)
+from core.models import BoundingBox, TableData
+from core.presets import LAPTOP_FHD
 
 
 def test_table_data_valid_instantiation() -> None:
@@ -103,3 +111,84 @@ def test_calculate_column_widths_with_empty_rows() -> None:
     assert len(widths) == 2
     bbox = font.getbbox("Header One")
     assert widths[0] >= (bbox[2] - bbox[0] + 20)
+
+
+def test_render_wallpaper_creates_image_file(tmp_path: Path) -> None:
+    """Ensure render_wallpaper creates an image matching the preset resolution."""
+    output_path = tmp_path / "test_wallpaper.png"
+    table = TableData(
+        headers=["Command", "Description"],
+        rows=[["git status", "Show working tree status"]],
+    )
+
+    result_path = render_wallpaper(
+        table=table,
+        preset=LAPTOP_FHD,
+        output_path=output_path,
+    )
+
+    assert result_path == output_path
+    assert result_path.is_file()
+    with Image.open(result_path) as img:
+        assert img.size == (LAPTOP_FHD.resolution.width, LAPTOP_FHD.resolution.height)
+
+
+def test_render_wallpaper_draws_content(tmp_path: Path) -> None:
+    """Ensure render_wallpaper renders headers, rows, and graphic elements."""
+    output_path = tmp_path / "content_wallpaper.png"
+    table = TableData(
+        headers=["Col1", "Col2"],
+        rows=[["Val1", "Val2"]],
+    )
+
+    render_wallpaper(
+        table=table,
+        preset=LAPTOP_FHD,
+        output_path=output_path,
+    )
+
+    with Image.open(output_path) as img:
+        total_pixels = LAPTOP_FHD.resolution.width * LAPTOP_FHD.resolution.height
+        colors = img.getcolors(maxcolors=total_pixels)
+        assert colors is not None
+        assert len(colors) > 1
+
+
+def test_calculate_rows_per_page_fits_within_safe_area() -> None:
+    """Ensure calculate_rows_per_page computes exact rows fitting safe area height."""
+    safe_area = BoundingBox(x=0, y=0, width=1920, height=325)
+    rows_per_page = calculate_rows_per_page(
+        safe_area=safe_area,
+        row_height=28,
+        header_height=45,
+    )
+    assert rows_per_page == 10
+
+
+def test_render_wallpaper_pagination_renders_distinct_pages(tmp_path: Path) -> None:
+    """Ensure render_wallpaper renders distinct content for different pages."""
+    table = TableData(
+        headers=["Command", "Description"],
+        rows=[[f"cmd_{i}", f"desc_{i}"] for i in range(50)],
+    )
+    page_1_path = tmp_path / "page_1.png"
+    page_2_path = tmp_path / "page_2.png"
+
+    render_wallpaper(table=table, preset=LAPTOP_FHD, output_path=page_1_path, page=1)
+    render_wallpaper(table=table, preset=LAPTOP_FHD, output_path=page_2_path, page=2)
+
+    assert page_1_path.read_bytes() != page_2_path.read_bytes()
+
+
+def test_render_wallpaper_invalid_page_raises_value_error(tmp_path: Path) -> None:
+    """Ensure render_wallpaper raises ValueError when page number is less than 1."""
+    table = TableData(headers=["Command"], rows=[["ls"]])
+    with pytest.raises(
+        ValueError, match="Page number must be greater than or equal to 1"
+    ):
+        render_wallpaper(
+            table=table,
+            preset=LAPTOP_FHD,
+            output_path=tmp_path / "test.png",
+            page=0,
+        )
