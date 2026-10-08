@@ -1,5 +1,11 @@
 # cheatsheet-engine
 
+[![CI](https://github.com/vvsparrow/cheatsheet-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/vvsparrow/cheatsheet-engine/actions/workflows/ci.yml)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Pyright Strict](https://img.shields.io/badge/types-pyright%20strict-blue.svg)](https://github.com/microsoft/pyright)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 <p>
   <a href="https://sparrowlab.dev">
     <img src="assets/sparrow.svg" width="18" height="18"
