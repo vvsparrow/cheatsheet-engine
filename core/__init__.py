@@ -24,6 +24,11 @@ from core.presets import (
     PHONE_PANORAMA,
     DevicePreset,
 )
+from core.typography import (
+    calculate_line_height,
+    truncate_to_width,
+    wrap_text,
+)
 
 __all__ = [
     "DESKTOP_2K",
@@ -42,7 +47,10 @@ __all__ = [
     "assert_within_safe_area",
     "calculate_column_widths",
     "calculate_layout_boxes",
+    "calculate_line_height",
     "calculate_rows_per_page",
     "get_font",
     "render_wallpaper",
+    "truncate_to_width",
+    "wrap_text",
 ]
