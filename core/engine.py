@@ -88,6 +88,96 @@ def calculate_rows_per_page(
     return usable_height // row_height
 
 
+def calculate_layout_boxes(
+    table: TableData,
+    preset: DevicePreset,
+    page: int = 1,
+) -> tuple[BoundingBox, ...]:
+    """Calculate bounding boxes for all layout elements on the specified page.
+
+    Args:
+        table: Tabular dataset with headers and rows.
+        preset: Target device layout and resolution preset.
+        page: One-based page number.
+
+    Returns:
+        Tuple of BoundingBox instances representing headers, line, and cells.
+
+    Raises:
+        ValueError: If page is less than 1.
+    """
+    if page < 1:
+        raise ValueError("Page number must be greater than or equal to 1.")
+
+    safe_area = preset.get_safe_area()
+    header_font = get_font(size=20, bold=True)
+    body_font = get_font(size=18, bold=False)
+    widths = calculate_column_widths(table=table, font=header_font, padding=40)
+
+    col_x_offsets: list[int] = []
+    current_x = safe_area.x
+    for width in widths:
+        col_x_offsets.append(current_x)
+        current_x += width
+
+    boxes: list[BoundingBox] = []
+    current_y = safe_area.y
+
+    for col_idx, header in enumerate(table.headers):
+        bbox = header_font.getbbox(header)
+        text_w = max(1, bbox[2] - bbox[0])
+        text_h = max(1, bbox[3] - bbox[1])
+        boxes.append(
+            BoundingBox(
+                x=int(col_x_offsets[col_idx] + bbox[0]),
+                y=int(current_y + bbox[1]),
+                width=int(text_w),
+                height=int(text_h),
+            )
+        )
+
+    current_y += 30
+    total_table_width = sum(widths)
+    boxes.append(
+        BoundingBox(
+            x=safe_area.x,
+            y=current_y,
+            width=total_table_width,
+            height=2,
+        )
+    )
+    current_y += 15
+
+    row_height = 28
+    rows_per_page = calculate_rows_per_page(
+        safe_area=safe_area,
+        row_height=row_height,
+        header_height=45,
+    )
+    if rows_per_page > 0:
+        start_idx = (page - 1) * rows_per_page
+        end_idx = start_idx + rows_per_page
+        visible_rows = table.rows[start_idx:end_idx]
+    else:
+        visible_rows = ()
+
+    for row in visible_rows:
+        for col_idx, cell in enumerate(row):
+            bbox = body_font.getbbox(cell)
+            text_w = max(1, bbox[2] - bbox[0])
+            text_h = max(1, bbox[3] - bbox[1])
+            boxes.append(
+                BoundingBox(
+                    x=int(col_x_offsets[col_idx] + bbox[0]),
+                    y=int(current_y + bbox[1]),
+                    width=int(text_w),
+                    height=int(text_h),
+                )
+            )
+        current_y += row_height
+    return tuple(boxes)
+
+
 def render_wallpaper(
     table: TableData,
     preset: DevicePreset,

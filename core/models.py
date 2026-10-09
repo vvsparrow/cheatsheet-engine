@@ -90,6 +90,38 @@ class BoundingBox:
         """Calculate bottom boundary Y coordinate."""
         return self.y + self.height
 
+    def intersects(self, other: BoundingBox) -> bool:
+        """Determine whether this bounding box overlaps with another.
+
+        Args:
+            other: Target BoundingBox to check for intersection.
+
+        Returns:
+            True if boxes strictly overlap, False if disjoint or touching.
+        """
+        return not (
+            self.right <= other.x
+            or other.right <= self.x
+            or self.bottom <= other.y
+            or other.bottom <= self.y
+        )
+
+    def contains(self, other: BoundingBox) -> bool:
+        """Determine whether this bounding box completely encloses another.
+
+        Args:
+            other: Target BoundingBox to check for enclosure.
+
+        Returns:
+            True if other is completely within this box, False otherwise.
+        """
+        return (
+            self.x <= other.x
+            and self.y <= other.y
+            and self.right >= other.right
+            and self.bottom >= other.bottom
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class TableData:

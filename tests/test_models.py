@@ -85,3 +85,54 @@ def test_resolution_get_safe_area_exceeds_dimensions() -> None:
 
     with pytest.raises(ValueError, match="strictly positive"):
         res.get_safe_area(sz)
+
+
+def test_bounding_box_intersects_overlapping() -> None:
+    """Ensure intersects returns True for overlapping bounding boxes."""
+    box_a = BoundingBox(x=10, y=10, width=50, height=50)
+    box_b = BoundingBox(x=30, y=30, width=50, height=50)
+    assert box_a.intersects(box_b) is True
+    assert box_b.intersects(box_a) is True
+
+
+def test_bounding_box_intersects_separated() -> None:
+    """Ensure intersects returns False for separated bounding boxes."""
+    box_a = BoundingBox(x=10, y=10, width=20, height=20)
+    box_b = BoundingBox(x=50, y=50, width=20, height=20)
+    assert box_a.intersects(box_b) is False
+    assert box_b.intersects(box_a) is False
+
+
+def test_bounding_box_intersects_touching_edges() -> None:
+    """Ensure adjacent boxes sharing an edge do not count as intersecting."""
+    box_a = BoundingBox(x=0, y=0, width=10, height=10)
+    box_b = BoundingBox(x=10, y=0, width=10, height=10)
+    box_c = BoundingBox(x=0, y=10, width=10, height=10)
+    assert box_a.intersects(box_b) is False
+    assert box_a.intersects(box_c) is False
+
+
+def test_bounding_box_contains_inner_box() -> None:
+    """Ensure contains returns True when a box is completely enclosed."""
+    outer = BoundingBox(x=0, y=0, width=100, height=100)
+    inner = BoundingBox(x=10, y=10, width=80, height=80)
+    assert outer.contains(inner) is True
+    assert inner.contains(outer) is False
+
+
+def test_bounding_box_contains_identical_and_flush_edges() -> None:
+    """Ensure contains returns True for identical bounds or flush edges."""
+    box_a = BoundingBox(x=0, y=0, width=100, height=100)
+    box_b = BoundingBox(x=0, y=0, width=100, height=100)
+    flush_inner = BoundingBox(x=0, y=0, width=50, height=50)
+    assert box_a.contains(box_b) is True
+    assert box_b.contains(flush_inner) is True
+
+
+def test_bounding_box_contains_exceeding_boundaries() -> None:
+    """Ensure contains returns False when a box extends outside boundaries."""
+    outer = BoundingBox(x=10, y=10, width=50, height=50)
+    partially_outside = BoundingBox(x=5, y=10, width=50, height=50)
+    completely_outside = BoundingBox(x=100, y=100, width=20, height=20)
+    assert outer.contains(partially_outside) is False
+    assert outer.contains(completely_outside) is False
