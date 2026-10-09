@@ -18,9 +18,9 @@
 
 ## Milestone 2: Quality Gates (v0.2.0)
 
-- [ ] Automated test suite (Pytest)
-- [ ] Collision detection (text overlaps via font metrics)
-- [ ] Boundary & Safe Zone assertions
+- [X] Automated test suite (Pytest)
+- [X] Collision detection (text overlaps via font metrics)
+- [X] Boundary & Safe Zone assertions
 - [ ] Defensive Layout (Word wrapping, text truncation with ellipsis)
 - [ ] Visual Regression Testing (Snapshot / pixel-diff assertions)
 - [ ] Structured Logging & Observability (render metrics, layout reports)
