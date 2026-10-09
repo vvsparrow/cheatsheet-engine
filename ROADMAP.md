@@ -1,8 +1,8 @@
 # Product Roadmap: cheatsheet-engine
 
-## Milestone 1: Core Layout Engine (v0.1.0) — Current Focus
+## Milestone 1: Core Layout Engine (v0.1.0) — Released
 
-- [x] Basic layout generation (Pillow)
+- [X] Basic layout generation (Pillow)
 - [X] Data-driven Layout Engine (Resolution, SafeZone, dynamic
   bounding box)
 - [X] Out-of-the-box presets:
@@ -16,15 +16,17 @@
   - Zero-clipping text wrapping and auto-scaling
   - Cross-platform font fallback
 
-## Milestone 2: Quality Gates (v0.2.0)
+## Milestone 2: Quality Gates (v0.2.0) — Current Focus
 
 - [X] Automated test suite (Pytest)
 - [X] Collision detection (text overlaps via font metrics)
 - [X] Boundary & Safe Zone assertions
 - [ ] Defensive Layout (Word wrapping, text truncation with ellipsis)
+- [ ] Modularize engine architecture (extract font loader, SRP #20)
 - [ ] Visual Regression Testing (Snapshot / pixel-diff assertions)
 - [ ] Structured Logging & Observability (render metrics, layout reports)
 - [ ] CI/CD Pipeline (GitHub Actions: Linux, macOS, Windows)
+- [ ] Changelog tracking (Keep a Changelog standard, CHANGELOG.md)
 
 ## Milestone 3: Standalone Operator Tool (v0.3.0)
 
@@ -35,6 +37,7 @@
 
 - [ ] First public release pack on Gumroad / Lemon Squeezy
 - [ ] Preset themes (Classic Dark / Light)
+- [ ] Open-source contribution guidelines (CONTRIBUTING.md)
 
 ## Milestone 5: Aesthetics & Wearables (v1.1.0)
 
