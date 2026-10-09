@@ -11,6 +11,7 @@ from PIL.ImageFont import FreeTypeFont
 
 from core.engine import (
     calculate_column_widths,
+    calculate_layout_boxes,
     calculate_rows_per_page,
     get_font,
     render_wallpaper,
@@ -192,3 +193,18 @@ def test_render_wallpaper_invalid_page_raises_value_error(tmp_path: Path) -> Non
             output_path=tmp_path / "test.png",
             page=0,
         )
+
+
+def test_calculate_layout_boxes_counts_and_boundaries() -> None:
+    """Ensure calculate_layout_boxes returns bboxes for headers, line, and
+    cell."""
+    table = TableData(
+        headers=["Col A", "Col B"], rows=[["Val 1", "Val 2"], ["Val 3", "Val 4"]]
+    )
+    boxes = calculate_layout_boxes(table=table, preset=LAPTOP_FHD, page=1)
+
+    assert len(boxes) == 7
+    for box in boxes:
+        assert isinstance(box, BoundingBox)
+        assert box.width > 0
+        assert box.height > 0
