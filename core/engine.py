@@ -9,6 +9,7 @@ from PIL.ImageFont import FreeTypeFont
 
 from core.models import BoundingBox, TableData
 from core.presets import DevicePreset
+from core.typography import truncate_to_width, wrap_text
 
 FONTS_DIR = Path(__file__).resolve().parent.parent / "assets" / "fonts"
 
@@ -39,6 +40,7 @@ def calculate_column_widths(
     table: TableData,
     font: FreeTypeFont | ImageFont.ImageFont,
     padding: int = 20,
+    max_column_width: int | None = None,
 ) -> tuple[int, ...]:
     """Calculate dynamic column widths based on maximum text bounding boxes.
 
@@ -62,7 +64,10 @@ def calculate_column_widths(
             cell_width = cell_bbox[2] - cell_bbox[0]
             max_width = max(max_width, cell_width)
 
-        widths.append(int(max_width + padding))
+        col_w = int(max_width + padding)
+        if max_column_width is not None and max_column_width > 0:
+            col_w = min(col_w, max_column_width)
+        widths.append(col_w)
 
     return tuple(widths)
 
@@ -112,7 +117,10 @@ def calculate_layout_boxes(
     safe_area = preset.get_safe_area()
     header_font = get_font(size=20, bold=True)
     body_font = get_font(size=18, bold=False)
-    widths = calculate_column_widths(table=table, font=header_font, padding=40)
+    max_col_w = safe_area.width // table.column_count
+    widths = calculate_column_widths(
+        table=table, font=header_font, padding=40, max_column_width=max_col_w
+    )
 
     col_x_offsets: list[int] = []
     current_x = safe_area.x
@@ -124,7 +132,10 @@ def calculate_layout_boxes(
     current_y = safe_area.y
 
     for col_idx, header in enumerate(table.headers):
-        bbox = header_font.getbbox(header)
+        fitted_header = truncate_to_width(
+            text=header, font=header_font, max_width=max(10, widths[col_idx] - 40)
+        )
+        bbox = header_font.getbbox(fitted_header)
         text_w = max(1, bbox[2] - bbox[0])
         text_h = max(1, bbox[3] - bbox[1])
         boxes.append(
@@ -148,10 +159,9 @@ def calculate_layout_boxes(
     )
     current_y += 15
 
-    row_height = 28
     rows_per_page = calculate_rows_per_page(
         safe_area=safe_area,
-        row_height=row_height,
+        row_height=28,
         header_height=45,
     )
     if rows_per_page > 0:
@@ -162,19 +172,35 @@ def calculate_layout_boxes(
         visible_rows = ()
 
     for row in visible_rows:
-        for col_idx, cell in enumerate(row):
-            bbox = body_font.getbbox(cell)
-            text_w = max(1, bbox[2] - bbox[0])
-            text_h = max(1, bbox[3] - bbox[1])
-            boxes.append(
-                BoundingBox(
-                    x=int(col_x_offsets[col_idx] + bbox[0]),
-                    y=int(current_y + bbox[1]),
-                    width=int(text_w),
-                    height=int(text_h),
-                )
+        row_lines = [
+            wrap_text(
+                text=cell,
+                font=body_font,
+                max_width=max(10, widths[col_idx] - 40),
             )
+            for col_idx, cell in enumerate(row)
+        ]
+        num_lines = max((len(lines) for lines in row_lines), default=1)
+        line_step = 24
+        row_height = num_lines * line_step + 4
+
+        for col_idx, lines in enumerate(row_lines):
+            for line_idx, line in enumerate(lines):
+                if not line:
+                    continue
+                bbox = body_font.getbbox(line)
+                text_w = max(1, bbox[2] - bbox[0])
+                text_h = max(1, bbox[3] - bbox[1])
+                boxes.append(
+                    BoundingBox(
+                        x=int(col_x_offsets[col_idx] + bbox[0]),
+                        y=int(current_y + line_idx * line_step + bbox[1]),
+                        width=int(text_w),
+                        height=int(text_h),
+                    )
+                )
         current_y += row_height
+
     return tuple(boxes)
 
 
@@ -212,7 +238,10 @@ def render_wallpaper(
 
     header_font = get_font(size=20, bold=True)
     body_font = get_font(size=18, bold=False)
-    widths = calculate_column_widths(table=table, font=header_font, padding=40)
+    max_col_w = safe_area.width // table.column_count
+    widths = calculate_column_widths(
+        table=table, font=header_font, padding=40, max_column_width=max_col_w
+    )
 
     col_x_offsets: list[int] = []
     current_x = safe_area.x
@@ -223,9 +252,12 @@ def render_wallpaper(
     current_y = safe_area.y
 
     for col_idx, header in enumerate(table.headers):
+        fitted_header = truncate_to_width(
+            text=header, font=header_font, max_width=max(10, widths[col_idx] - 40)
+        )
         draw.text(
             (col_x_offsets[col_idx], current_y),
-            header,
+            fitted_header,
             fill=(100, 200, 255),
             font=header_font,
         )
@@ -239,10 +271,9 @@ def render_wallpaper(
     )
     current_y += 15
 
-    row_height = 28
     rows_per_page = calculate_rows_per_page(
         safe_area=safe_area,
-        row_height=row_height,
+        row_height=28,
         header_height=45,
     )
     if rows_per_page > 0:
@@ -253,13 +284,28 @@ def render_wallpaper(
         visible_rows = ()
 
     for row in visible_rows:
-        for col_idx, cell in enumerate(row):
-            draw.text(
-                (col_x_offsets[col_idx], current_y),
-                cell,
-                fill=(240, 240, 240),
+        row_lines = [
+            wrap_text(
+                text=cell,
                 font=body_font,
+                max_width=max(10, widths[col_idx] - 40),
             )
+            for col_idx, cell in enumerate(row)
+        ]
+        num_lines = max((len(lines) for lines in row_lines), default=1)
+        line_step = 24
+        row_height = num_lines * line_step + 4
+
+        for col_idx, lines in enumerate(row_lines):
+            for line_idx, line in enumerate(lines):
+                if not line:
+                    continue
+                draw.text(
+                    (col_x_offsets[col_idx], current_y + line_idx * line_step),
+                    line,
+                    fill=(240, 240, 240),
+                    font=body_font,
+                )
         current_y += row_height
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

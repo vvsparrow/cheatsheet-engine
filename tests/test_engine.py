@@ -16,6 +16,7 @@ from core.engine import (
     get_font,
     render_wallpaper,
 )
+from core.geometry import assert_no_collisions
 from core.models import BoundingBox, TableData
 from core.presets import LAPTOP_FHD
 
@@ -208,3 +209,55 @@ def test_calculate_layout_boxes_counts_and_boundaries() -> None:
         assert isinstance(box, BoundingBox)
         assert box.width > 0
         assert box.height > 0
+
+
+def test_calculate_column_widths_caps_at_max_column_width() -> None:
+    """Ensure calculate_column_widths clamps columns exceeding max width."""
+    font = get_font(size=18, bold=False)
+    table = TableData(
+        headers=["LongHeaderTitleThatExceedsLimit"],
+        rows=[["ExtremelyLongDataRowContentThatShouldBeCapped"]],
+    )
+    widths = calculate_column_widths(
+        table=table, font=font, padding=20, max_column_width=150
+    )
+    assert widths == (150,)
+
+
+def test_calculate_layout_boxes_wrapped_rows_no_collisions() -> None:
+    """Ensure wrapped lines dynamically adjust row heights without collisions."""
+    long_text = (
+        "Show working tree status and list untracked or modified files "
+        "across all working directories, repositories, and local branches "
+        "with deep detail and comprehensive diagnostics"
+    )
+    table = TableData(
+        headers=["Command", "Description"],
+        rows=[
+            ["git status", long_text],
+            ["git commit", "Record staged snapshot changes to repository"],
+        ],
+    )
+    boxes = calculate_layout_boxes(table=table, preset=LAPTOP_FHD, page=1)
+
+    # 2 headers + 1 separator line + 1 git status cell + >1 wrapped lines + 2 for row 2
+    assert len(boxes) > 7
+    assert_no_collisions(boxes)
+
+
+def test_render_wallpaper_defensive_layout(tmp_path: Path) -> None:
+    """Ensure render_wallpaper renders overflowing and multi-word text safely."""
+    overflow_word = "SupercalifragilisticexpialidociousLongUnbrokenTokenString"
+    long_phrase = "Detailed explanation of system status across environments " * 5
+    table = TableData(
+        headers=["Component", "Details"],
+        rows=[
+            ["Telemetry", long_phrase],
+            [overflow_word, "Normal description"],
+        ],
+    )
+    output_path = tmp_path / "defensive_layout.png"
+    result = render_wallpaper(table=table, preset=LAPTOP_FHD, output_path=output_path)
+
+    assert result.is_file()
+    assert result.stat().st_size > 0
