@@ -27,16 +27,24 @@
 - [ ] Structured Logging & Observability (render metrics, layout reports)
 - [ ] CI/CD Pipeline (GitHub Actions: Linux, macOS, Windows)
 - [ ] Changelog tracking (Keep a Changelog standard, CHANGELOG.md)
+- [ ] Dataset Quality Gates (duplicate checks, sort order, unit validation)
 
 ## Milestone 3: Standalone Operator Tool (v0.3.0)
 
-- [ ] Standalone build (.exe for Windows) for operator generation
-  workflow
+- [ ] Standalone build (.exe for Windows) with GUI (CustomTkinter) and
+  CLI for operator generation workflow (dropdowns, 1-click export)
+- [ ] Anki Deck Compiler (genanki): parallel export with nested
+  subdecks `(::)`
+- [ ] Automated batch packager: bundle wallpapers, Anki deck, and
+  disclaimer into ZIP
 
 ## Milestone 4: First Commercial Release (v1.0.0)
 
 - [ ] First public release pack on Gumroad / Lemon Squeezy
 - [ ] Preset themes (Classic Dark / Light)
+- [ ] Theme Engine: ThemeConfig model with WCAG 2.1 contrast ratio
+  assertions
+- [ ] Starter seed datasets (English irregular verbs, NCLEX lab values)
 - [ ] Open-source contribution guidelines (CONTRIBUTING.md)
 
 ## Milestone 5: Aesthetics & Wearables (v1.1.0)
@@ -56,3 +64,4 @@
 - [ ] High-yield NCLEX specialized packs (Pediatrics, Pharmacology,
   Critical Care)
 - [ ] Custom order CLI generator
+- [ ] Web micro-SaaS generator (FastAPI backend for browser generation)
