@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from core.engine import render_wallpaper
+from core.engine import render_card_pack, render_wallpaper
 from core.models import TableData
-from core.presets import DESKTOP_2K, LAPTOP_FHD
+from core.presets import DESKTOP_2K, LAPTOP_FHD, PHONE_LOCKSCREEN
 
 
 def test_table_data_valid_instantiation() -> None:
@@ -173,3 +173,30 @@ def test_render_wallpaper_multi_column_desktop_2k(tmp_path: Path) -> None:
         colors = right_crop.getcolors(maxcolors=2400 * 600)
         assert colors is not None
         assert len(colors) > 1  # Больше 1 цвета означает наличие текста
+
+
+def test_render_card_pack_generates_all_pages(tmp_path: Path) -> None:
+    """Ensure render_card_pack renders complete numbered series of cards."""
+    headers = ["Verb", "Translation"]
+    rows = [[f"verb_{i}", f"trans_{i}"] for i in range(120)]
+    table = TableData(headers=headers, rows=rows)
+    cards_dir = tmp_path / "mobile_cards"
+
+    generated_paths = render_card_pack(
+        table=table,
+        preset=PHONE_LOCKSCREEN,
+        output_dir=cards_dir,
+    )
+
+    assert len(generated_paths) > 1
+    assert cards_dir.is_dir()
+
+    total_cards = len(generated_paths)
+    for idx, card_path in enumerate(generated_paths, start=1):
+        assert card_path.is_file()
+        assert f"part_{idx}_of_{total_cards}.png" in card_path.name
+        with Image.open(card_path) as img:
+            assert img.size == (
+                PHONE_LOCKSCREEN.resolution.width,
+                PHONE_LOCKSCREEN.resolution.height,
+            )

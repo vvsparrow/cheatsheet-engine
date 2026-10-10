@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from core.engine import render_wallpaper
+from core.engine import render_card_pack, render_wallpaper
 from core.fonts import get_font
 from core.geometry import (
     LayoutCollisionError,
@@ -13,6 +13,7 @@ from core.geometry import (
 from core.layout import (
     calculate_column_widths,
     calculate_layout_boxes,
+    calculate_page_capacity,
     calculate_rows_per_page,
 )
 from core.models import BoundingBox, Resolution, SafeZone, TableData
@@ -48,8 +49,10 @@ __all__ = [
     "calculate_column_widths",
     "calculate_layout_boxes",
     "calculate_line_height",
+    "calculate_page_capacity",
     "calculate_rows_per_page",
     "get_font",
+    "render_card_pack",
     "render_wallpaper",
     "truncate_to_width",
     "wrap_text",

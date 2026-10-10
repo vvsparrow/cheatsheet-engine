@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from dataclasses import dataclass
+
 from PIL import ImageFont
 from PIL.ImageFont import FreeTypeFont
 
@@ -9,6 +12,28 @@ from core.fonts import get_font
 from core.models import BoundingBox, TableData
 from core.presets import PHONE_LOCKSCREEN, DevicePreset
 from core.typography import truncate_to_width, wrap_text
+
+
+@dataclass(frozen=True, slots=True)
+class PageLayout:
+    """Computed geometric layout matrix for a single page of content.
+
+    Attributes:
+        single_widths: Measured widths for columns in a single table block.
+        single_block_width: Total horizontal width of a single table block.
+        rows_per_block: Maximum vertical data rows that fit in one block.
+        num_blocks: Number of horizontal column blocks rendered on this page.
+        gutter: Horizontal spacing in pixels between adjacent column blocks.
+        page_rows: Subset of table data rows allocated to this page.
+    """
+
+    single_widths: tuple[int, ...]
+    single_block_width: int
+    rows_per_block: int
+    num_blocks: int
+    gutter: int
+    page_capacity: int
+    page_rows: Sequence[Sequence[str]]
 
 
 def calculate_column_widths(
@@ -86,12 +111,29 @@ def calculate_rows_per_page(
     return usable_height // row_height
 
 
-def calculate_layout_boxes(
+def calculate_page_capacity(
+    table: TableData,
+    preset: DevicePreset,
+) -> int:
+    """Calculate the total row capacity across all column blocks on one page.
+
+    Args:
+        table: Tabular dataset with headers and rows.
+        preset: Target device layout and resolution preset.
+
+    Returns:
+        Integer count of rows that fit into one page.
+    """
+    layout = calculate_page_layout(table=table, preset=preset, page=1)
+    return layout.page_capacity
+
+
+def calculate_page_layout(
     table: TableData,
     preset: DevicePreset,
     page: int = 1,
-) -> tuple[BoundingBox, ...]:
-    """Calculate bounding boxes for all layout elements on the specified page.
+) -> PageLayout:
+    """Calculate the layout grid parameters and rows for a specific page.
 
     Args:
         table: Tabular dataset with headers and rows.
@@ -99,7 +141,7 @@ def calculate_layout_boxes(
         page: One-based page number.
 
     Returns:
-        Tuple of BoundingBox instances representing headers, line, and cells.
+        PageLayout instance containing widths, blocks, and row slices.
 
     Raises:
         ValueError: If page is less than 1.
@@ -109,7 +151,6 @@ def calculate_layout_boxes(
 
     safe_area = preset.get_safe_area()
     header_font = get_font(size=20, bold=True)
-    body_font = get_font(size=18, bold=False)
 
     target_width: int | None = None
     max_col_w: int | None = safe_area.width // max(1, table.column_count)
@@ -132,7 +173,16 @@ def calculate_layout_boxes(
         header_height=45,
     )
     if rows_per_block <= 0:
-        return ()
+        page_capacity = 0
+        return PageLayout(
+            page_capacity=page_capacity,
+            single_widths=single_widths,
+            single_block_width=single_block_width,
+            rows_per_block=0,
+            num_blocks=1,
+            gutter=0,
+            page_rows=(),
+        )
 
     min_gutter = 40
     if preset == PHONE_LOCKSCREEN or single_block_width >= safe_area.width:
@@ -143,42 +193,64 @@ def calculate_layout_boxes(
             (safe_area.width + min_gutter) // max(1, single_block_width + min_gutter),
         )
 
-    # Определяем диапазон строк для текущей страницы
     page_capacity = rows_per_block * max_blocks
-    start_row_idx = (page - 1) * page_capacity
-    end_row_idx = start_row_idx + page_capacity
-    page_rows = table.rows[start_row_idx:end_row_idx]
+    start_idx = (page - 1) * page_capacity
+    end_idx = start_idx + page_capacity
+    page_rows = table.rows[start_idx:end_idx]
 
     if not page_rows:
         num_blocks = 1
     else:
-        needed_blocks = (len(page_rows) + rows_per_block - 1) // rows_per_block
-        num_blocks = max(1, min(max_blocks, needed_blocks))
+        needed = (len(page_rows) + rows_per_block - 1) // rows_per_block
+        num_blocks = max(1, min(max_blocks, needed))
 
-    if num_blocks > 1:
-        total_content_w = num_blocks * single_block_width
-        gutter = (safe_area.width - total_content_w) // (num_blocks - 1)
-    else:
-        gutter = 0
+    gutter = (
+        (safe_area.width - num_blocks * single_block_width) // (num_blocks - 1)
+        if num_blocks > 1
+        else 0
+    )
 
+    return PageLayout(
+        single_widths=single_widths,
+        single_block_width=single_block_width,
+        rows_per_block=rows_per_block,
+        num_blocks=num_blocks,
+        gutter=gutter,
+        page_capacity=page_capacity,
+        page_rows=page_rows,
+    )
+
+
+def calculate_layout_boxes(
+    table: TableData,
+    preset: DevicePreset,
+    page: int = 1,
+) -> tuple[BoundingBox, ...]:
+    """Calculate bounding boxes for all layout elements on the specified page."""
+    layout = calculate_page_layout(table=table, preset=preset, page=page)
+    if layout.rows_per_block <= 0:
+        return ()
+
+    safe_area = preset.get_safe_area()
+    header_font = get_font(size=20, bold=True)
+    body_font = get_font(size=18, bold=False)
     boxes: list[BoundingBox] = []
 
-    for block_idx in range(num_blocks):
-        block_x = safe_area.x + block_idx * (single_block_width + gutter)
+    for block_idx in range(layout.num_blocks):
+        block_x = safe_area.x + block_idx * (layout.single_block_width + layout.gutter)
         current_y = safe_area.y
 
         col_x_offsets: list[int] = []
         curr_x = block_x
-        for w in single_widths:
+        for w in layout.single_widths:
             col_x_offsets.append(curr_x)
             curr_x += w
 
-        # Шапка текущего блока
         for col_idx, header in enumerate(table.headers):
             fitted_header = truncate_to_width(
                 text=header,
                 font=header_font,
-                max_width=max(10, single_widths[col_idx] - 40),
+                max_width=max(10, layout.single_widths[col_idx] - 40),
             )
             bbox = header_font.getbbox(fitted_header)
             text_w = max(1, bbox[2] - bbox[0])
@@ -197,23 +269,22 @@ def calculate_layout_boxes(
             BoundingBox(
                 x=block_x,
                 y=current_y,
-                width=single_block_width,
+                width=layout.single_block_width,
                 height=2,
             )
         )
         current_y += 15
 
-        # Строки данных текущего блока
-        b_start = block_idx * rows_per_block
-        b_end = b_start + rows_per_block
-        block_rows = page_rows[b_start:b_end]
+        b_start = block_idx * layout.rows_per_block
+        b_end = b_start + layout.rows_per_block
+        block_rows = layout.page_rows[b_start:b_end]
 
         for row in block_rows:
             row_lines = [
                 wrap_text(
                     text=cell,
                     font=body_font,
-                    max_width=max(10, single_widths[col_idx] - 40),
+                    max_width=max(10, layout.single_widths[col_idx] - 40),
                 )
                 for col_idx, cell in enumerate(row)
             ]
