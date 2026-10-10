@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from core.engine import calculate_layout_boxes
 from core.geometry import (
     LayoutCollisionError,
     SafeZoneViolationError,
     assert_no_collisions,
     assert_within_safe_area,
 )
+from core.layout import calculate_layout_boxes
 from core.models import BoundingBox, TableData
 from core.presets import (
     DESKTOP_2K,
