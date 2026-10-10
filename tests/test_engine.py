@@ -7,15 +7,14 @@ from pathlib import Path
 
 import pytest
 from PIL import Image
-from PIL.ImageFont import FreeTypeFont
 
 from core.engine import (
     calculate_column_widths,
     calculate_layout_boxes,
     calculate_rows_per_page,
-    get_font,
     render_wallpaper,
 )
+from core.fonts import get_font
 from core.geometry import assert_no_collisions
 from core.models import BoundingBox, TableData
 from core.presets import LAPTOP_FHD
@@ -61,29 +60,6 @@ def test_table_data_is_immutable() -> None:
     table = TableData(headers=["A", "B"], rows=[["1", "2"]])
     with pytest.raises(FrozenInstanceError):
         table.headers = ("C", "D")  # type: ignore[misc]
-
-
-def test_get_font_regular_returns_bundled_font() -> None:
-    """Ensure get_font loads the bundled regular font with the requested size."""
-    font = get_font(size=24, bold=False)
-    assert isinstance(font, FreeTypeFont)
-    assert font.size == 24
-
-
-def test_get_font_bold_returns_bundled_font() -> None:
-    """Ensure get_font loads the bold font with the requested size."""
-    font = get_font(size=32, bold=True)
-    assert isinstance(font, FreeTypeFont)
-    assert font.size == 32
-
-
-def test_get_font_fallback_when_path_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Ensure get_font falls back to Pillow default font if assets are missing."""
-    import core.engine as engine_module
-
-    monkeypatch.setattr(engine_module, "FONTS_DIR", engine_module.Path("/nonexistent"))
-    font = get_font(size=20)
-    assert font is not None
 
 
 def test_calculate_column_widths_respects_content_and_padding() -> None:

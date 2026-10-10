@@ -6,9 +6,9 @@ from core.engine import (
     calculate_column_widths,
     calculate_layout_boxes,
     calculate_rows_per_page,
-    get_font,
     render_wallpaper,
 )
+from core.fonts import get_font
 from core.geometry import (
     LayoutCollisionError,
     SafeZoneViolationError,
