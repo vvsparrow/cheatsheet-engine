@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
-from core.engine import (
-    calculate_column_widths,
-    calculate_layout_boxes,
-    calculate_rows_per_page,
-    get_font,
-    render_wallpaper,
-)
+from core.boxes import calculate_layout_boxes
+from core.engine import render_card_pack, render_wallpaper
+from core.fonts import get_font
 from core.geometry import (
     LayoutCollisionError,
     SafeZoneViolationError,
     assert_no_collisions,
     assert_within_safe_area,
+)
+from core.layout import (
+    calculate_column_widths,
+    calculate_page_capacity,
+    calculate_rows_per_page,
 )
 from core.models import BoundingBox, Resolution, SafeZone, TableData
 from core.presets import (
@@ -48,8 +49,10 @@ __all__ = [
     "calculate_column_widths",
     "calculate_layout_boxes",
     "calculate_line_height",
+    "calculate_page_capacity",
     "calculate_rows_per_page",
     "get_font",
+    "render_card_pack",
     "render_wallpaper",
     "truncate_to_width",
     "wrap_text",

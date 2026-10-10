@@ -56,3 +56,12 @@ def test_phone_lockscreen_safe_zone_proportions() -> None:
     expected_bottom = int(2796 * 0.15)
     assert PHONE_LOCKSCREEN.safe_zone.top == expected_top
     assert PHONE_LOCKSCREEN.safe_zone.bottom == expected_bottom
+
+
+def test_desktop_and_tablet_safe_zones_reserve_system_margins() -> None:
+    """Ensure desktop and tablet presets reserve space for icons and bars."""
+    assert DESKTOP_2K.safe_zone.left >= 200
+    assert DESKTOP_2K.safe_zone.bottom >= 60
+    assert LAPTOP_FHD.safe_zone.left >= 100
+    assert LAPTOP_FHD.safe_zone.bottom >= 50
+    assert IPAD_PORTRAIT.safe_zone.top >= 150

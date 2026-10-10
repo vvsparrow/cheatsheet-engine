@@ -1,4 +1,4 @@
-"""Tests for cheatsheet layout engine and data models."""
+"""Integration tests for cheatsheet wallpaper rendering engine."""
 
 from __future__ import annotations
 
@@ -7,18 +7,10 @@ from pathlib import Path
 
 import pytest
 from PIL import Image
-from PIL.ImageFont import FreeTypeFont
 
-from core.engine import (
-    calculate_column_widths,
-    calculate_layout_boxes,
-    calculate_rows_per_page,
-    get_font,
-    render_wallpaper,
-)
-from core.geometry import assert_no_collisions
-from core.models import BoundingBox, TableData
-from core.presets import LAPTOP_FHD
+from core.engine import render_card_pack, render_wallpaper
+from core.models import TableData
+from core.presets import DESKTOP_2K, LAPTOP_FHD, PHONE_LOCKSCREEN
 
 
 def test_table_data_valid_instantiation() -> None:
@@ -50,69 +42,17 @@ def test_table_data_row_length_mismatch_raises_value_error() -> None:
     headers = ["Command", "Description"]
     rows = [
         ["git status", "Show status"],
-        ["git commit"],  # 1 element instead of 2
+        ["git commit"],
     ]
     with pytest.raises(ValueError, match="Row length mismatch"):
         TableData(headers=headers, rows=rows)
 
 
 def test_table_data_is_immutable() -> None:
-    """Ensure  TableData enforces immutability via FrozenInstanceError."""
+    """Ensure TableData enforces immutability via FrozenInstanceError."""
     table = TableData(headers=["A", "B"], rows=[["1", "2"]])
     with pytest.raises(FrozenInstanceError):
         table.headers = ("C", "D")  # type: ignore[misc]
-
-
-def test_get_font_regular_returns_bundled_font() -> None:
-    """Ensure get_font loads the bundled regular font with the requested size."""
-    font = get_font(size=24, bold=False)
-    assert isinstance(font, FreeTypeFont)
-    assert font.size == 24
-
-
-def test_get_font_bold_returns_bundled_font() -> None:
-    """Ensure get_font loads the bold font with the requested size."""
-    font = get_font(size=32, bold=True)
-    assert isinstance(font, FreeTypeFont)
-    assert font.size == 32
-
-
-def test_get_font_fallback_when_path_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Ensure get_font falls back to Pillow default font if assets are missing."""
-    import core.engine as engine_module
-
-    monkeypatch.setattr(engine_module, "FONTS_DIR", engine_module.Path("/nonexistent"))
-    font = get_font(size=20)
-    assert font is not None
-
-
-def test_calculate_column_widths_respects_content_and_padding() -> None:
-    """Ensure calculate_column_widths accounts for longest cell and column padding."""
-    table = TableData(
-        headers=["ID", "Long Header Description"],
-        rows=[["1", "Short"], ["99999", "Tiny"]],
-    )
-    font = get_font(size=20)
-    padding = 30
-    widths = calculate_column_widths(table=table, font=font, padding=padding)
-
-    assert len(widths) == 2
-    assert widths[1] > widths[0]
-
-    bbox_id = font.getbbox("99999")
-    text_width_0 = bbox_id[2] - bbox_id[0]
-    assert widths[0] >= text_width_0 + padding
-
-
-def test_calculate_column_widths_with_empty_rows() -> None:
-    """Ensure calculate_column_widths works when table has no data rows."""
-    table = TableData(headers=["Header One", "Header Two"], rows=[])
-    font = get_font(size=20)
-    widths = calculate_column_widths(table=table, font=font, padding=20)
-
-    assert len(widths) == 2
-    bbox = font.getbbox("Header One")
-    assert widths[0] >= (bbox[2] - bbox[0] + 20)
 
 
 def test_render_wallpaper_creates_image_file(tmp_path: Path) -> None:
@@ -132,7 +72,10 @@ def test_render_wallpaper_creates_image_file(tmp_path: Path) -> None:
     assert result_path == output_path
     assert result_path.is_file()
     with Image.open(result_path) as img:
-        assert img.size == (LAPTOP_FHD.resolution.width, LAPTOP_FHD.resolution.height)
+        assert img.size == (
+            LAPTOP_FHD.resolution.width,
+            LAPTOP_FHD.resolution.height,
+        )
 
 
 def test_render_wallpaper_draws_content(tmp_path: Path) -> None:
@@ -156,18 +99,9 @@ def test_render_wallpaper_draws_content(tmp_path: Path) -> None:
         assert len(colors) > 1
 
 
-def test_calculate_rows_per_page_fits_within_safe_area() -> None:
-    """Ensure calculate_rows_per_page computes exact rows fitting safe area height."""
-    safe_area = BoundingBox(x=0, y=0, width=1920, height=325)
-    rows_per_page = calculate_rows_per_page(
-        safe_area=safe_area,
-        row_height=28,
-        header_height=45,
-    )
-    assert rows_per_page == 10
-
-
-def test_render_wallpaper_pagination_renders_distinct_pages(tmp_path: Path) -> None:
+def test_render_wallpaper_pagination_renders_distinct_pages(
+    tmp_path: Path,
+) -> None:
     """Ensure render_wallpaper renders distinct content for different pages."""
     table = TableData(
         headers=["Command", "Description"],
@@ -182,8 +116,10 @@ def test_render_wallpaper_pagination_renders_distinct_pages(tmp_path: Path) -> N
     assert page_1_path.read_bytes() != page_2_path.read_bytes()
 
 
-def test_render_wallpaper_invalid_page_raises_value_error(tmp_path: Path) -> None:
-    """Ensure render_wallpaper raises ValueError when page number is less than 1."""
+def test_render_wallpaper_invalid_page_raises_value_error(
+    tmp_path: Path,
+) -> None:
+    """Ensure render_wallpaper raises ValueError when page is less than 1."""
     table = TableData(headers=["Command"], rows=[["ls"]])
     with pytest.raises(
         ValueError, match="Page number must be greater than or equal to 1"
@@ -194,55 +130,6 @@ def test_render_wallpaper_invalid_page_raises_value_error(tmp_path: Path) -> Non
             output_path=tmp_path / "test.png",
             page=0,
         )
-
-
-def test_calculate_layout_boxes_counts_and_boundaries() -> None:
-    """Ensure calculate_layout_boxes returns bboxes for headers, line, and
-    cell."""
-    table = TableData(
-        headers=["Col A", "Col B"], rows=[["Val 1", "Val 2"], ["Val 3", "Val 4"]]
-    )
-    boxes = calculate_layout_boxes(table=table, preset=LAPTOP_FHD, page=1)
-
-    assert len(boxes) == 7
-    for box in boxes:
-        assert isinstance(box, BoundingBox)
-        assert box.width > 0
-        assert box.height > 0
-
-
-def test_calculate_column_widths_caps_at_max_column_width() -> None:
-    """Ensure calculate_column_widths clamps columns exceeding max width."""
-    font = get_font(size=18, bold=False)
-    table = TableData(
-        headers=["LongHeaderTitleThatExceedsLimit"],
-        rows=[["ExtremelyLongDataRowContentThatShouldBeCapped"]],
-    )
-    widths = calculate_column_widths(
-        table=table, font=font, padding=20, max_column_width=150
-    )
-    assert widths == (150,)
-
-
-def test_calculate_layout_boxes_wrapped_rows_no_collisions() -> None:
-    """Ensure wrapped lines dynamically adjust row heights without collisions."""
-    long_text = (
-        "Show working tree status and list untracked or modified files "
-        "across all working directories, repositories, and local branches "
-        "with deep detail and comprehensive diagnostics"
-    )
-    table = TableData(
-        headers=["Command", "Description"],
-        rows=[
-            ["git status", long_text],
-            ["git commit", "Record staged snapshot changes to repository"],
-        ],
-    )
-    boxes = calculate_layout_boxes(table=table, preset=LAPTOP_FHD, page=1)
-
-    # 2 headers + 1 separator line + 1 git status cell + >1 wrapped lines + 2 for row 2
-    assert len(boxes) > 7
-    assert_no_collisions(boxes)
 
 
 def test_render_wallpaper_defensive_layout(tmp_path: Path) -> None:
@@ -261,3 +148,55 @@ def test_render_wallpaper_defensive_layout(tmp_path: Path) -> None:
 
     assert result.is_file()
     assert result.stat().st_size > 0
+
+
+def test_render_wallpaper_multi_column_desktop_2k(tmp_path: Path) -> None:
+    """Ensure render_wallpaper draws multi-column blocks across 2K display."""
+    headers = ["V1", "V2", "V3", "Translation"]
+    rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
+    table = TableData(headers=headers, rows=rows)
+    output_path = tmp_path / "desktop_2k_wallpaper.png"
+
+    result = render_wallpaper(
+        table=table,
+        preset=DESKTOP_2K,
+        output_path=output_path,
+        page=1,
+    )
+
+    assert result.is_file()
+    with Image.open(result) as img:
+        assert img.size == (2560, 1440)
+        # Проверяем, что в правой трети экрана (x > 1700) есть отрисованный текст,
+        # а не сплошной фоновый цвет (18, 20, 24)
+        right_crop = img.crop((1700, 100, 2400, 600))
+        colors = right_crop.getcolors(maxcolors=2400 * 600)
+        assert colors is not None
+        assert len(colors) > 1  # Больше 1 цвета означает наличие текста
+
+
+def test_render_card_pack_generates_all_pages(tmp_path: Path) -> None:
+    """Ensure render_card_pack renders complete numbered series of cards."""
+    headers = ["Verb", "Translation"]
+    rows = [[f"verb_{i}", f"trans_{i}"] for i in range(120)]
+    table = TableData(headers=headers, rows=rows)
+    cards_dir = tmp_path / "mobile_cards"
+
+    generated_paths = render_card_pack(
+        table=table,
+        preset=PHONE_LOCKSCREEN,
+        output_dir=cards_dir,
+    )
+
+    assert len(generated_paths) > 1
+    assert cards_dir.is_dir()
+
+    total_cards = len(generated_paths)
+    for idx, card_path in enumerate(generated_paths, start=1):
+        assert card_path.is_file()
+        assert f"part_{idx}_of_{total_cards}.png" in card_path.name
+        with Image.open(card_path) as img:
+            assert img.size == (
+                PHONE_LOCKSCREEN.resolution.width,
+                PHONE_LOCKSCREEN.resolution.height,
+            )

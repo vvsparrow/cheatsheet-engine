@@ -38,25 +38,25 @@ class DevicePreset:
 DESKTOP_2K = DevicePreset(
     name="Desktop 2K",
     resolution=Resolution(width=2560, height=1440),
-    safe_zone=SafeZone(top=0, bottom=0, left=0, right=0),
+    safe_zone=SafeZone(top=115, bottom=80, left=260, right=60),
 )
 
 LAPTOP_FHD = DevicePreset(
     name="Laptop Full HD",
     resolution=Resolution(width=1920, height=1080),
-    safe_zone=SafeZone(top=0, bottom=0, left=0, right=0),
+    safe_zone=SafeZone(top=80, bottom=60, left=120, right=50),
 )
 
 IPAD_PORTRAIT = DevicePreset(
     name="iPad Portrait",
     resolution=Resolution(width=2048, height=2732),
-    safe_zone=SafeZone(top=0, bottom=0, left=0, right=0),
+    safe_zone=SafeZone(top=280, bottom=80, left=80, right=80),
 )
 
 PHONE_PANORAMA = DevicePreset(
     name="Phone Panorama",
     resolution=Resolution(width=3240, height=2412),
-    safe_zone=SafeZone(top=0, bottom=0, left=0, right=0),
+    safe_zone=SafeZone(top=160, bottom=160, left=50, right=50),
 )
 
 PHONE_LOCKSCREEN = DevicePreset(

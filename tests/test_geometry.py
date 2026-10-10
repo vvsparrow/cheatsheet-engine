@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.engine import calculate_layout_boxes
+from core.boxes import calculate_layout_boxes
 from core.geometry import (
     LayoutCollisionError,
     SafeZoneViolationError,
