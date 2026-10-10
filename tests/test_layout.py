@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from core.fonts import get_font
-from core.geometry import assert_no_collisions
+from core.geometry import assert_no_collisions, assert_within_safe_area
 from core.layout import (
     calculate_column_widths,
     calculate_layout_boxes,
     calculate_rows_per_page,
 )
 from core.models import BoundingBox, TableData
-from core.presets import LAPTOP_FHD, PHONE_LOCKSCREEN
+from core.presets import DESKTOP_2K, LAPTOP_FHD, PHONE_LOCKSCREEN
 
 
 def test_calculate_column_widths_respects_content_and_padding() -> None:
@@ -154,3 +154,24 @@ def test_phone_lockscreen_stretches_to_safe_area_width() -> None:
     # Сепаратор (высота 2px) должен растянуться на всю ширину safe_area
     line_box = next(box for box in boxes if box.height == 2)
     assert line_box.width == safe_area.width
+
+
+def test_calculate_layout_boxes_multi_column_flow_desktop_2k() -> None:
+    """Ensure DESKTOP_2K distributes 120 rows into 3 horizontal column blocks."""
+    headers = ["V1", "V2", "V3", "Translation"]
+    rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
+    table = TableData(headers=headers, rows=rows)
+
+    boxes = calculate_layout_boxes(table=table, preset=DESKTOP_2K, page=1)
+    safe_area = DESKTOP_2K.get_safe_area()
+
+    # В 3-блочной верстке должно быть ровно 3 разделительные линии (по одной на блок)
+    separators = [box for box in boxes if box.height == 2]
+    assert len(separators) == 3
+
+    # Разделители должны идти слева направо с зазором
+    assert separators[0].x < separators[1].x < separators[2].x
+
+    # Все боксы должны лежать в safe_area и не пересекаться
+    assert_within_safe_area(boxes=boxes, safe_area=safe_area)
+    assert_no_collisions(boxes)

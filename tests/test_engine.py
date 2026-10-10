@@ -10,7 +10,7 @@ from PIL import Image
 
 from core.engine import render_wallpaper
 from core.models import TableData
-from core.presets import LAPTOP_FHD
+from core.presets import DESKTOP_2K, LAPTOP_FHD
 
 
 def test_table_data_valid_instantiation() -> None:
@@ -148,3 +148,28 @@ def test_render_wallpaper_defensive_layout(tmp_path: Path) -> None:
 
     assert result.is_file()
     assert result.stat().st_size > 0
+
+
+def test_render_wallpaper_multi_column_desktop_2k(tmp_path: Path) -> None:
+    """Ensure render_wallpaper draws multi-column blocks across 2K display."""
+    headers = ["V1", "V2", "V3", "Translation"]
+    rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
+    table = TableData(headers=headers, rows=rows)
+    output_path = tmp_path / "desktop_2k_wallpaper.png"
+
+    result = render_wallpaper(
+        table=table,
+        preset=DESKTOP_2K,
+        output_path=output_path,
+        page=1,
+    )
+
+    assert result.is_file()
+    with Image.open(result) as img:
+        assert img.size == (2560, 1440)
+        # Проверяем, что в правой трети экрана (x > 1700) есть отрисованный текст,
+        # а не сплошной фоновый цвет (18, 20, 24)
+        right_crop = img.crop((1700, 100, 2400, 600))
+        colors = right_crop.getcolors(maxcolors=2400 * 600)
+        assert colors is not None
+        assert len(colors) > 1  # Больше 1 цвета означает наличие текста

@@ -110,98 +110,132 @@ def calculate_layout_boxes(
     safe_area = preset.get_safe_area()
     header_font = get_font(size=20, bold=True)
     body_font = get_font(size=18, bold=False)
+
     target_width: int | None = None
-    max_col_w: int | None = safe_area.width // table.column_count
+    max_col_w: int | None = safe_area.width // max(1, table.column_count)
     if preset == PHONE_LOCKSCREEN:
         target_width = safe_area.width
         max_col_w = None
-    widths = calculate_column_widths(
+
+    single_widths = calculate_column_widths(
         table=table,
         font=header_font,
         padding=40,
         max_column_width=max_col_w,
         target_width=target_width,
     )
+    single_block_width = sum(single_widths)
 
-    col_x_offsets: list[int] = []
-    current_x = safe_area.x
-    for width in widths:
-        col_x_offsets.append(current_x)
-        current_x += width
-
-    boxes: list[BoundingBox] = []
-    current_y = safe_area.y
-
-    for col_idx, header in enumerate(table.headers):
-        fitted_header = truncate_to_width(
-            text=header,
-            font=header_font,
-            max_width=max(10, widths[col_idx] - 40),
-        )
-        bbox = header_font.getbbox(fitted_header)
-        text_w = max(1, bbox[2] - bbox[0])
-        text_h = max(1, bbox[3] - bbox[1])
-        boxes.append(
-            BoundingBox(
-                x=int(col_x_offsets[col_idx] + bbox[0]),
-                y=int(current_y + bbox[1]),
-                width=int(text_w),
-                height=int(text_h),
-            )
-        )
-
-    current_y += 30
-    total_table_width = sum(widths)
-    boxes.append(
-        BoundingBox(
-            x=safe_area.x,
-            y=current_y,
-            width=total_table_width,
-            height=2,
-        )
-    )
-    current_y += 15
-
-    rows_per_page = calculate_rows_per_page(
+    rows_per_block = calculate_rows_per_page(
         safe_area=safe_area,
         row_height=28,
         header_height=45,
     )
-    if rows_per_page > 0:
-        start_idx = (page - 1) * rows_per_page
-        end_idx = start_idx + rows_per_page
-        visible_rows = table.rows[start_idx:end_idx]
+    if rows_per_block <= 0:
+        return ()
+
+    min_gutter = 40
+    if preset == PHONE_LOCKSCREEN or single_block_width >= safe_area.width:
+        max_blocks = 1
     else:
-        visible_rows = ()
+        max_blocks = max(
+            1,
+            (safe_area.width + min_gutter) // max(1, single_block_width + min_gutter),
+        )
 
-    for row in visible_rows:
-        row_lines = [
-            wrap_text(
-                text=cell,
-                font=body_font,
-                max_width=max(10, widths[col_idx] - 40),
+    # Определяем диапазон строк для текущей страницы
+    page_capacity = rows_per_block * max_blocks
+    start_row_idx = (page - 1) * page_capacity
+    end_row_idx = start_row_idx + page_capacity
+    page_rows = table.rows[start_row_idx:end_row_idx]
+
+    if not page_rows:
+        num_blocks = 1
+    else:
+        needed_blocks = (len(page_rows) + rows_per_block - 1) // rows_per_block
+        num_blocks = max(1, min(max_blocks, needed_blocks))
+
+    if num_blocks > 1:
+        total_content_w = num_blocks * single_block_width
+        gutter = (safe_area.width - total_content_w) // (num_blocks - 1)
+    else:
+        gutter = 0
+
+    boxes: list[BoundingBox] = []
+
+    for block_idx in range(num_blocks):
+        block_x = safe_area.x + block_idx * (single_block_width + gutter)
+        current_y = safe_area.y
+
+        col_x_offsets: list[int] = []
+        curr_x = block_x
+        for w in single_widths:
+            col_x_offsets.append(curr_x)
+            curr_x += w
+
+        # Шапка текущего блока
+        for col_idx, header in enumerate(table.headers):
+            fitted_header = truncate_to_width(
+                text=header,
+                font=header_font,
+                max_width=max(10, single_widths[col_idx] - 40),
             )
-            for col_idx, cell in enumerate(row)
-        ]
-        num_lines = max((len(lines) for lines in row_lines), default=1)
-        line_step = 24
-        row_height = num_lines * line_step + 4
-
-        for col_idx, lines in enumerate(row_lines):
-            for line_idx, line in enumerate(lines):
-                if not line:
-                    continue
-                bbox = body_font.getbbox(line)
-                text_w = max(1, bbox[2] - bbox[0])
-                text_h = max(1, bbox[3] - bbox[1])
-                boxes.append(
-                    BoundingBox(
-                        x=int(col_x_offsets[col_idx] + bbox[0]),
-                        y=int(current_y + line_idx * line_step + bbox[1]),
-                        width=int(text_w),
-                        height=int(text_h),
-                    )
+            bbox = header_font.getbbox(fitted_header)
+            text_w = max(1, bbox[2] - bbox[0])
+            text_h = max(1, bbox[3] - bbox[1])
+            boxes.append(
+                BoundingBox(
+                    x=int(col_x_offsets[col_idx] + bbox[0]),
+                    y=int(current_y + bbox[1]),
+                    width=int(text_w),
+                    height=int(text_h),
                 )
-        current_y += row_height
+            )
+
+        current_y += 30
+        boxes.append(
+            BoundingBox(
+                x=block_x,
+                y=current_y,
+                width=single_block_width,
+                height=2,
+            )
+        )
+        current_y += 15
+
+        # Строки данных текущего блока
+        b_start = block_idx * rows_per_block
+        b_end = b_start + rows_per_block
+        block_rows = page_rows[b_start:b_end]
+
+        for row in block_rows:
+            row_lines = [
+                wrap_text(
+                    text=cell,
+                    font=body_font,
+                    max_width=max(10, single_widths[col_idx] - 40),
+                )
+                for col_idx, cell in enumerate(row)
+            ]
+            num_lines = max((len(lines) for lines in row_lines), default=1)
+            line_step = 24
+            row_height = num_lines * line_step + 4
+
+            for col_idx, lines in enumerate(row_lines):
+                for line_idx, line in enumerate(lines):
+                    if not line:
+                        continue
+                    bbox = body_font.getbbox(line)
+                    text_w = max(1, bbox[2] - bbox[0])
+                    text_h = max(1, bbox[3] - bbox[1])
+                    boxes.append(
+                        BoundingBox(
+                            x=int(col_x_offsets[col_idx] + bbox[0]),
+                            y=int(current_y + line_idx * line_step + bbox[1]),
+                            width=int(text_w),
+                            height=int(text_h),
+                        )
+                    )
+            current_y += row_height
 
     return tuple(boxes)
