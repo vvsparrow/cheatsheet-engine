@@ -56,7 +56,7 @@ IPAD_PORTRAIT = DevicePreset(
 PHONE_PANORAMA = DevicePreset(
     name="Phone Panorama",
     resolution=Resolution(width=3240, height=2412),
-    safe_zone=SafeZone(top=0, bottom=0, left=0, right=0),
+    safe_zone=SafeZone(top=160, bottom=160, left=50, right=50),
 )
 
 PHONE_LOCKSCREEN = DevicePreset(
