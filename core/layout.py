@@ -7,7 +7,7 @@ from PIL.ImageFont import FreeTypeFont
 
 from core.fonts import get_font
 from core.models import BoundingBox, TableData
-from core.presets import DevicePreset
+from core.presets import PHONE_LOCKSCREEN, DevicePreset
 from core.typography import truncate_to_width, wrap_text
 
 
@@ -16,6 +16,7 @@ def calculate_column_widths(
     font: FreeTypeFont | ImageFont.ImageFont,
     padding: int = 20,
     max_column_width: int | None = None,
+    target_width: int | None = None,
 ) -> tuple[int, ...]:
     """Calculate dynamic column widths based on maximum text bounding boxes.
 
@@ -24,6 +25,7 @@ def calculate_column_widths(
         font: Font used to measure rendered text metrics.
         padding: Horizontal padding in pixels added to each column.
         max_column_width: Optional upper bound constraint for column width.
+        target_width: Optional width in pixels to stretch columns to.
 
     Returns:
         Tuple of integer column widths in pixels.
@@ -44,6 +46,21 @@ def calculate_column_widths(
         if max_column_width is not None and max_column_width > 0:
             col_w = min(col_w, max_column_width)
         widths.append(col_w)
+
+    if target_width is not None and target_width > 0 and widths:
+        total_w = sum(widths)
+        if 0 < total_w < target_width:
+            scale = target_width / total_w
+            scaled_widths = [int(w * scale) for w in widths]
+            remainder = target_width - sum(scaled_widths)
+            scaled_widths[-1] += remainder
+            widths = scaled_widths
+        elif total_w == 0:
+            base_w = target_width // len(widths)
+            scaled_widths = [base_w] * len(widths)
+            remainder = target_width - sum(scaled_widths)
+            scaled_widths[-1] += remainder
+            widths = scaled_widths
 
     return tuple(widths)
 
@@ -93,9 +110,17 @@ def calculate_layout_boxes(
     safe_area = preset.get_safe_area()
     header_font = get_font(size=20, bold=True)
     body_font = get_font(size=18, bold=False)
-    max_col_w = safe_area.width // table.column_count
+    target_width: int | None = None
+    max_col_w: int | None = safe_area.width // table.column_count
+    if preset == PHONE_LOCKSCREEN:
+        target_width = safe_area.width
+        max_col_w = None
     widths = calculate_column_widths(
-        table=table, font=header_font, padding=40, max_column_width=max_col_w
+        table=table,
+        font=header_font,
+        padding=40,
+        max_column_width=max_col_w,
+        target_width=target_width,
     )
 
     col_x_offsets: list[int] = []

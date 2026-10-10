@@ -10,7 +10,7 @@ from core.layout import (
     calculate_rows_per_page,
 )
 from core.models import BoundingBox, TableData
-from core.presets import LAPTOP_FHD
+from core.presets import LAPTOP_FHD, PHONE_LOCKSCREEN
 
 
 def test_calculate_column_widths_respects_content_and_padding() -> None:
@@ -99,3 +99,58 @@ def test_calculate_layout_boxes_wrapped_rows_no_collisions() -> None:
 
     assert len(boxes) > 7
     assert_no_collisions(boxes)
+
+
+def test_calculate_column_widths_justifies_to_target_width() -> None:
+    """Ensure calculate_column_widths stretches columns to match target."""
+    table = TableData(
+        headers=["Verb", "Translation"],
+        rows=[["take", "брать, взять"], ["bring", "приносить"]],
+    )
+    font = get_font(size=20)
+    target_width = 1290
+
+    widths = calculate_column_widths(
+        table=table,
+        font=font,
+        padding=20,
+        target_width=target_width,
+    )
+
+    assert len(widths) == 2
+    assert sum(widths) == target_width
+    assert widths[1] > widths[0]
+
+
+def test_calculate_column_widths_no_shrink_when_content_wider() -> None:
+    """Ensure calculate_column_widths does not shrink below natural width."""
+    table = TableData(
+        headers=["Verb", "Translation"],
+        rows=[["take", "брать, взять"], ["bring", "приносить"]],
+    )
+    font = get_font(size=20)
+    natural_widths = calculate_column_widths(table=table, font=font, padding=20)
+    natural_total = sum(natural_widths)
+
+    widths = calculate_column_widths(
+        table=table,
+        font=font,
+        padding=20,
+        target_width=natural_total - 100,
+    )
+
+    assert widths == natural_widths
+
+
+def test_phone_lockscreen_stretches_to_safe_area_width() -> None:
+    """Ensure PHONE_LOCKSCREEN expands table width to fill safe area."""
+    table = TableData(
+        headers=["Verb", "Translation"],
+        rows=[["take", "брать, взять"], ["bring", "приносить"]],
+    )
+    boxes = calculate_layout_boxes(table=table, preset=PHONE_LOCKSCREEN, page=1)
+    safe_area = PHONE_LOCKSCREEN.get_safe_area()
+
+    # Сепаратор (высота 2px) должен растянуться на всю ширину safe_area
+    line_box = next(box for box in boxes if box.height == 2)
+    assert line_box.width == safe_area.width

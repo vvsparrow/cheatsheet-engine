@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 from core.fonts import get_font
 from core.layout import calculate_column_widths, calculate_rows_per_page
 from core.models import TableData
-from core.presets import DevicePreset
+from core.presets import PHONE_LOCKSCREEN, DevicePreset
 from core.typography import truncate_to_width, wrap_text
 
 
@@ -47,12 +47,17 @@ def render_wallpaper(
 
     header_font = get_font(size=20, bold=True)
     body_font = get_font(size=18, bold=False)
-    max_col_w = safe_area.width // table.column_count
+    target_width: int | None = None
+    max_col_w: int | None = safe_area.width // table.column_count
+    if preset == PHONE_LOCKSCREEN:
+        target_width = safe_area.width
+        max_col_w = None
     widths = calculate_column_widths(
         table=table,
         font=header_font,
         padding=40,
         max_column_width=max_col_w,
+        target_width=target_width,
     )
 
     col_x_offsets: list[int] = []
