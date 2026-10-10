@@ -22,7 +22,7 @@
 - [X] Collision detection (text overlaps via font metrics)
 - [X] Boundary & Safe Zone assertions
 - [X] Defensive Layout (Word wrapping, text truncation with ellipsis)
-- [ ] Modularize engine architecture (extract font loader, SRP #20)
+- [X] Modularize engine architecture (extract font loader, SRP #20)
 - [ ] Visual Regression Testing (Snapshot / pixel-diff assertions)
 - [ ] Structured Logging & Observability (render metrics, layout reports)
 - [ ] CI/CD Pipeline (GitHub Actions: Linux, macOS, Windows)
