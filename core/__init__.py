@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from core.boxes import calculate_layout_boxes
 from core.engine import render_card_pack, render_wallpaper
 from core.fonts import get_font
 from core.geometry import (
@@ -12,7 +13,6 @@ from core.geometry import (
 )
 from core.layout import (
     calculate_column_widths,
-    calculate_layout_boxes,
     calculate_page_capacity,
     calculate_rows_per_page,
 )

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from core.boxes import calculate_layout_boxes
 from core.fonts import get_font
 from core.geometry import assert_no_collisions, assert_within_safe_area
 from core.layout import (
     calculate_column_widths,
-    calculate_layout_boxes,
     calculate_rows_per_page,
 )
 from core.models import BoundingBox, TableData
