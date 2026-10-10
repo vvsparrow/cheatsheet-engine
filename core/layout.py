@@ -10,7 +10,11 @@ from PIL.ImageFont import FreeTypeFont
 
 from core.fonts import get_font
 from core.models import BoundingBox, TableData
-from core.presets import PHONE_LOCKSCREEN, DevicePreset
+from core.presets import (
+    PHONE_LOCKSCREEN,
+    PHONE_PANORAMA,
+    DevicePreset,
+)
 from core.typography import truncate_to_width, wrap_text
 
 
@@ -204,11 +208,19 @@ def calculate_page_layout(
         needed = (len(page_rows) + rows_per_block - 1) // rows_per_block
         num_blocks = max(1, min(max_blocks, needed))
 
-    gutter = (
-        (safe_area.width - num_blocks * single_block_width) // (num_blocks - 1)
-        if num_blocks > 1
-        else 0
-    )
+    if preset == PHONE_PANORAMA:
+        num_blocks = 3
+        panel_w = preset.resolution.width // 3
+        gutter = panel_w - single_block_width
+        if page_rows:
+            rows_per_block = min(
+                rows_per_block,
+                max(1, (len(page_rows) + 2) // 3),
+            )
+    elif num_blocks > 1:
+        gutter = (safe_area.width - num_blocks * single_block_width) // (num_blocks - 1)
+    else:
+        gutter = 0
 
     return PageLayout(
         single_widths=single_widths,

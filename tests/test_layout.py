@@ -10,7 +10,12 @@ from core.layout import (
     calculate_rows_per_page,
 )
 from core.models import BoundingBox, TableData
-from core.presets import DESKTOP_2K, LAPTOP_FHD, PHONE_LOCKSCREEN
+from core.presets import (
+    DESKTOP_2K,
+    LAPTOP_FHD,
+    PHONE_LOCKSCREEN,
+    PHONE_PANORAMA,
+)
 
 
 def test_calculate_column_widths_respects_content_and_padding() -> None:
@@ -175,3 +180,20 @@ def test_calculate_layout_boxes_multi_column_flow_desktop_2k() -> None:
     # Все боксы должны лежать в safe_area и не пересекаться
     assert_within_safe_area(boxes=boxes, safe_area=safe_area)
     assert_no_collisions(boxes)
+
+
+def test_phone_panorama_partitions_across_three_swipe_panels() -> None:
+    """Ensure PHONE_PANORAMA aligns 3 column blocks with 1080px swipe screens."""
+    headers = ["V1", "V2", "V3", "Translation"]
+    rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
+    table = TableData(headers=headers, rows=rows)
+
+    boxes = calculate_layout_boxes(table=table, preset=PHONE_PANORAMA, page=1)
+
+    separators = [box for box in boxes if box.height == 2]
+    assert len(separators) == 3
+
+    # Проверяем точную посадку в 3 экрана свайпа (1080px каждый с отступом 50px)
+    assert separators[0].x == 50
+    assert separators[1].x == 1130
+    assert separators[2].x == 2210
