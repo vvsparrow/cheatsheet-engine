@@ -69,7 +69,7 @@ def calculate_layout_boxes(
             fitted_header = truncate_to_width(
                 text=header,
                 font=header_font,
-                max_width=max(10, layout.single_widths[col_idx] - 40),
+                max_width=max(10, layout.single_widths[col_idx] - 20),
             )
             boxes.append(
                 _make_text_box(
@@ -100,7 +100,7 @@ def calculate_layout_boxes(
                 wrap_text(
                     text=cell,
                     font=body_font,
-                    max_width=max(10, layout.single_widths[col_idx] - 40),
+                    max_width=max(10, layout.single_widths[col_idx] - 20),
                 )
                 for col_idx, cell in enumerate(row)
             ]

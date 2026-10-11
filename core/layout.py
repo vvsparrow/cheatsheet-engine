@@ -153,7 +153,7 @@ def calculate_page_layout(
         raise ValueError("Page number must be greater than or equal to 1.")
 
     safe_area = preset.get_safe_area()
-    header_font = get_font(size=20, bold=True)
+    body_font = get_font(size=18, bold=False)
 
     target_width: int | None = None
     max_col_w: int | None = safe_area.width // max(1, table.column_count)
@@ -163,8 +163,8 @@ def calculate_page_layout(
 
     single_widths = calculate_column_widths(
         table=table,
-        font=header_font,
-        padding=40,
+        font=body_font,
+        padding=20,
         max_column_width=max_col_w,
         target_width=target_width,
     )
