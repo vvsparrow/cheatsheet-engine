@@ -68,7 +68,7 @@ def render_wallpaper(
             fitted_header = truncate_to_width(
                 text=header,
                 font=header_font,
-                max_width=max(10, layout.single_widths[col_idx] - 40),
+                max_width=max(10, layout.single_widths[col_idx] - 20),
             )
             draw.text(
                 (col_x_offsets[col_idx], current_y),
@@ -94,7 +94,7 @@ def render_wallpaper(
                 wrap_text(
                     text=cell,
                     font=body_font,
-                    max_width=max(10, layout.single_widths[col_idx] - 40),
+                    max_width=max(10, layout.single_widths[col_idx] - 20),
                 )
                 for col_idx, cell in enumerate(row)
             ]

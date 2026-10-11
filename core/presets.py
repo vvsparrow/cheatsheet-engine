@@ -65,7 +65,7 @@ PHONE_LOCKSCREEN = DevicePreset(
     safe_zone=SafeZone(
         top=int(2796 * 0.38),
         bottom=int(2796 * 0.15),
-        left=0,
-        right=0,
+        left=int(1290 * 0.07),
+        right=int(1290 * 0.07),
     ),
 )
