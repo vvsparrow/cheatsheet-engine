@@ -8,7 +8,7 @@ from core.columns import (
     calculate_column_widths,
     calculate_rows_per_page,
 )
-from core.engine import render_card_pack, render_wallpaper
+from core.engine import render_wallpaper
 from core.fonts import get_font
 from core.geometry import (
     LayoutCollisionError,
@@ -31,6 +31,15 @@ from core.presets import (
     PHONE_PANORAMA,
     DevicePreset,
 )
+from core.series import render_card_pack
+from core.theme import (
+    CLINICAL_THEME,
+    DARK_THEME,
+    LIGHT_THEME,
+    TOKYO_NIGHT_THEME,
+    Theme,
+    get_theme,
+)
 from core.typography import (
     calculate_line_height,
     truncate_to_width,
@@ -48,11 +57,15 @@ from core.validation import (
 )
 
 __all__ = [
+    "CLINICAL_THEME",
+    "DARK_THEME",
     "DESKTOP_2K",
     "IPAD_PORTRAIT",
     "LAPTOP_FHD",
+    "LIGHT_THEME",
     "PHONE_LOCKSCREEN",
     "PHONE_PANORAMA",
+    "TOKYO_NIGHT_THEME",
     "AnkiCardMapping",
     "BoundingBox",
     "DatasetSchemaError",
@@ -67,6 +80,7 @@ __all__ = [
     "SafeZoneViolationError",
     "SortOrderError",
     "TableData",
+    "Theme",
     "apply_device_overlay",
     "assert_no_collisions",
     "assert_no_duplicates",
@@ -81,6 +95,7 @@ __all__ = [
     "create_bundle_pack",
     "get_font",
     "get_logger",
+    "get_theme",
     "render_card_pack",
     "render_wallpaper",
     "truncate_to_width",

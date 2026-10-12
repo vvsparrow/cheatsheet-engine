@@ -17,6 +17,7 @@ from core.presets import (
     PHONE_PANORAMA,
     DevicePreset,
 )
+from core.theme import DARK_THEME, Theme
 from core.typography import truncate_to_width, wrap_text
 
 logger = get_logger("cheatsheet")
@@ -28,6 +29,7 @@ def render_wallpaper(
     output_path: Path,
     page: int = 1,
     collector: MetricsCollector | None = None,
+    theme: Theme = DARK_THEME,
 ) -> Path:
     """Render a cheatsheet wallpaper matching the given device preset geometry.
 
@@ -53,7 +55,7 @@ def render_wallpaper(
     img = Image.new(
         mode="RGB",
         size=(preset.resolution.width, preset.resolution.height),
-        color=(18, 20, 24),
+        color=theme.background,
     )
 
     if layout.rows_per_block <= 0:
@@ -112,14 +114,14 @@ def render_wallpaper(
             draw.text(
                 (col_x_offsets[col_idx], current_y),
                 fitted_header,
-                fill=(100, 200, 255),
+                fill=theme.text_header,
                 font=header_font,
             )
 
         current_y += 30
         draw.line(
             [(block_x, current_y), (block_x + layout.single_block_width, current_y)],
-            fill=(100, 200, 255),
+            fill=theme.separator,
             width=2,
         )
         current_y += 15
@@ -128,7 +130,7 @@ def render_wallpaper(
         b_end = b_start + layout.rows_per_block
         block_rows = layout.page_rows[b_start:b_end]
 
-        for row in block_rows:
+        for row_idx, row in enumerate(block_rows):
             row_lines = [
                 wrap_text(
                     text=cell,
@@ -141,6 +143,18 @@ def render_wallpaper(
             line_step = int(layout.font_size * 1.35)
             row_height = num_lines * line_step + 4
 
+            if row_idx % 2 == 1:
+                draw.rectangle(
+                    [
+                        (block_x, current_y),
+                        (
+                            block_x + layout.single_block_width,
+                            current_y + row_height,
+                        ),
+                    ],
+                    fill=theme.row_alt,
+                )
+
             for col_idx, lines in enumerate(row_lines):
                 for line_idx, line in enumerate(lines):
                     if not line:
@@ -151,7 +165,7 @@ def render_wallpaper(
                             current_y + line_idx * line_step,
                         ),
                         line,
-                        fill=(240, 240, 240),
+                        fill=theme.text_primary,
                         font=body_font,
                     )
             current_y += row_height
@@ -189,53 +203,3 @@ def render_wallpaper(
         collector.record(report)
 
     return output_path
-
-
-def render_card_pack(
-    table: TableData,
-    preset: DevicePreset,
-    output_dir: Path,
-    collector: MetricsCollector | None = None,
-) -> tuple[Path, ...]:
-    """Render complete paginated series of wallpapers for the dataset.
-
-    Args:
-        table: Tabular dataset to render across multiple pages.
-        preset: Target device layout and resolution preset.
-        output_dir: Destination directory for the generated card series.
-        collector: Optional metrics collector to capture execution report.
-
-    Returns:
-        Tuple of filesystem Paths to the generated images in order.
-    """
-    output_dir.mkdir(parents=True, exist_ok=True)
-    page_capacity = calculate_page_capacity(table=table, preset=preset)
-    if page_capacity <= 0 or table.row_count == 0:
-        slug = preset.name.lower().replace(" ", "_")
-        single_path = output_dir / f"{slug}_part_1_of_1.png"
-        render_wallpaper(
-            table=table,
-            preset=preset,
-            output_path=single_path,
-            page=1,
-            collector=collector,
-        )
-        return (single_path,)
-
-    total_pages = max(1, (table.row_count + page_capacity - 1) // page_capacity)
-    slug = preset.name.lower().replace(" ", "_")
-    paths: list[Path] = []
-
-    for page in range(1, total_pages + 1):
-        card_name = f"{slug}_part_{page}_of_{total_pages}.png"
-        card_path = output_dir / card_name
-        render_wallpaper(
-            table=table,
-            preset=preset,
-            output_path=card_path,
-            page=page,
-            collector=collector,
-        )
-        paths.append(card_path)
-
-    return tuple(paths)

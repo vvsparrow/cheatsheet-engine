@@ -8,7 +8,6 @@ import time
 from pathlib import Path
 
 from core.anki import compile_anki_deck
-from core.engine import render_card_pack
 from core.models import TableData
 from core.packager import create_bundle_pack
 from core.presets import (
@@ -19,6 +18,7 @@ from core.presets import (
     PHONE_PANORAMA,
     DevicePreset,
 )
+from core.series import render_card_pack
 from data.irregular_verbs import VERBS
 
 PRESET_CHOICES: dict[str, DevicePreset] = {
