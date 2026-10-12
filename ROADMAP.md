@@ -28,7 +28,7 @@
 - [X] Visual Regression Testing (Snapshot / pixel-diff assertions)
 - [X] Structured Logging & Observability (render metrics, layout reports)
 - [X] Cross-platform CI/CD Pipeline (GitHub Actions: Linux, macOS, Windows)
-- [ ] Changelog tracking (Keep a Changelog standard, CHANGELOG.md)
+- [X] Changelog tracking (Keep a Changelog standard, CHANGELOG.md)
 - [X] Dataset Quality Gates (duplicate checks, sort order, schema validation)
 
 ## Milestone 3: Developer CLI & Packaging (v0.3.0)
