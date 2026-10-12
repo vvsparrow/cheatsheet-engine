@@ -41,3 +41,16 @@ jobs:
 
       - name: Quality Gate - Pytest Test Suite
         run: uv run pytest
+
+  check-quality-gates:
+    name: Quality Gates
+    needs: quality-gates
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Verify all matrix runners passed
+        run: |
+          if [ "${{ needs.quality-gates.result }}" != "success" ]; then
+            echo "One or more matrix runners failed"
+            exit 1
+          fi
