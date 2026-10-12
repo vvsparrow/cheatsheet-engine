@@ -20,6 +20,7 @@ from core.layout import (
 from core.models import BoundingBox, Resolution, SafeZone, TableData
 from core.observability import MetricsCollector, RenderReport, get_logger
 from core.overlays import apply_device_overlay
+from core.packager import create_bundle_pack
 from core.presets import (
     DESKTOP_2K,
     IPAD_PORTRAIT,
@@ -75,6 +76,7 @@ __all__ = [
     "calculate_page_capacity",
     "calculate_rows_per_page",
     "compile_anki_deck",
+    "create_bundle_pack",
     "get_font",
     "get_logger",
     "render_card_pack",
