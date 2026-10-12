@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -116,3 +117,27 @@ def test_cli_watch_mode_renders_and_cycles_cleanly(tmp_path: Path) -> None:
 
     assert exit_code == 0
     assert len(list(out_dir.glob("*.png"))) > 0
+
+
+def test_cli_bundle_flag_creates_zip_archive(tmp_path: Path) -> None:
+    """Ensure --bundle flag creates distribution zip archive with manifest."""
+    out_dir = tmp_path / "packaged_bundle"
+    exit_code = main(
+        [
+            "--preset",
+            "laptop_fhd",
+            "--output-dir",
+            str(out_dir),
+            "--bundle",
+        ]
+    )
+    assert exit_code == 0
+
+    zip_files = list(out_dir.glob("*.zip"))
+    assert len(zip_files) == 1
+    assert zip_files[0].stat().st_size > 0
+
+    with zipfile.ZipFile(zip_files[0], "r") as archive:
+        namelist = archive.namelist()
+        assert "manifest.json" in namelist
+        assert any(name.endswith(".png") for name in namelist)

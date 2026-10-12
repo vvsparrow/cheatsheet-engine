@@ -10,6 +10,7 @@ from pathlib import Path
 from core.anki import compile_anki_deck
 from core.engine import render_card_pack
 from core.models import TableData
+from core.packager import create_bundle_pack
 from core.presets import (
     DESKTOP_2K,
     IPAD_PORTRAIT,
@@ -104,6 +105,17 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Watch dataset file for changes and re-render automatically.",
     )
+    parser.add_argument(
+        "--bundle",
+        action="store_true",
+        help="Bundle rendered wallpapers and artifacts into a zip archive with manifest.",
+    )
+    parser.add_argument(
+        "--bundle-name",
+        type=str,
+        default="Cheatsheet Bundle",
+        help="Custom title for the distribution bundle.",
+    )
     return parser
 
 
@@ -162,6 +174,15 @@ def main(
             table=table,
             deck_name=args.deck_name,
             output_path=apkg_path,
+        )
+
+    if args.bundle:
+        bundle_slug = args.bundle_name.lower().replace(" ", "_").replace("::", "_")
+        zip_path = args.output_dir / f"{bundle_slug}.zip"
+        create_bundle_pack(
+            source_dir=args.output_dir,
+            output_zip=zip_path,
+            bundle_name=args.bundle_name,
         )
 
     if args.watch and args.dataset is not None:
