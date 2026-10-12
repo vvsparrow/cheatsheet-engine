@@ -32,6 +32,16 @@ from core.typography import (
     truncate_to_width,
     wrap_text,
 )
+from core.validation import (
+    DatasetSchemaError,
+    DatasetValidationError,
+    DuplicateEntryError,
+    SortOrderError,
+    assert_no_duplicates,
+    assert_sorted_order,
+    validate_dataset,
+    validate_table_schema,
+)
 
 __all__ = [
     "DESKTOP_2K",
@@ -40,16 +50,22 @@ __all__ = [
     "PHONE_LOCKSCREEN",
     "PHONE_PANORAMA",
     "BoundingBox",
+    "DatasetSchemaError",
+    "DatasetValidationError",
     "DevicePreset",
+    "DuplicateEntryError",
     "LayoutCollisionError",
     "MetricsCollector",
     "RenderReport",
     "Resolution",
     "SafeZone",
     "SafeZoneViolationError",
+    "SortOrderError",
     "TableData",
     "apply_device_overlay",
     "assert_no_collisions",
+    "assert_no_duplicates",
+    "assert_sorted_order",
     "assert_within_safe_area",
     "calculate_column_widths",
     "calculate_layout_boxes",
@@ -61,5 +77,7 @@ __all__ = [
     "render_card_pack",
     "render_wallpaper",
     "truncate_to_width",
+    "validate_dataset",
+    "validate_table_schema",
     "wrap_text",
 ]
