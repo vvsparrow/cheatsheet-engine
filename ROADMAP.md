@@ -33,7 +33,7 @@
 
 ## Milestone 3: Developer CLI & Packaging (v0.3.0)
 
-- [ ] Command-line interface (CLI) for headless batch rendering
+- [X] Command-line interface (CLI) for headless batch rendering
 - [ ] Interactive preview mode with auto-reload on dataset change
 - [ ] Automated batch packager: bundle wallpapers by device series
 - [X] Anki Deck Compiler (genanki): parallel export with nested subdecks
