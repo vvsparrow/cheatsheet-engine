@@ -15,6 +15,7 @@ from core.presets import (
     PHONE_PANORAMA,
     DevicePreset,
 )
+from core.typography import calculate_adaptive_font_size
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +38,7 @@ class PageLayout:
     gutter: int
     page_capacity: int
     page_rows: Sequence[Sequence[str]]
+    font_size: int = 18
 
 
 def calculate_column_widths(
@@ -71,12 +73,10 @@ def calculate_column_widths(
             cell_bbox = font.getbbox(row[col_idx])
             cell_width = cell_bbox[2] - cell_bbox[0]
             max_width = max(max_width, cell_width)
-
         col_w = int(max_width + padding)
         if max_column_width is not None and max_column_width > 0:
             col_w = min(col_w, max_column_width)
         widths.append(col_w)
-
     if target_width is not None and target_width > 0 and widths:
         total_w = sum(widths)
         if 0 < total_w < target_width:
@@ -155,8 +155,16 @@ def calculate_page_layout(
         raise ValueError("Page number must be greater than or equal to 1.")
 
     safe_area = preset.get_safe_area()
-    header_font = get_font(size=preset.font_size, bold=True)
-    body_font = get_font(size=preset.font_size, bold=False)
+    effective_font_size = preset.font_size
+    if table.column_count <= 3 and table.row_count > 0:
+        usable_h = safe_area.height - int(preset.font_size * 2.2)
+        effective_font_size = calculate_adaptive_font_size(
+            available_height=usable_h,
+            row_count=table.row_count,
+            base_font_size=preset.font_size,
+        )
+    header_font = get_font(size=effective_font_size, bold=True)
+    body_font = get_font(size=effective_font_size, bold=False)
 
     target_width: int | None = None
     if preset == PHONE_PANORAMA:
@@ -175,11 +183,14 @@ def calculate_page_layout(
         target_width=target_width,
     )
     single_block_width = sum(single_widths)
-
-    header_height = int(preset.font_size * 2.2)
+    header_height = int(effective_font_size * 2.2)
+    effective_row_height = max(
+        preset.row_height,
+        int(effective_font_size * 1.55),
+    )
     rows_per_block = calculate_rows_per_page(
         safe_area=safe_area,
-        row_height=preset.row_height,
+        row_height=effective_row_height,
         header_height=header_height,
     )
 
@@ -193,6 +204,7 @@ def calculate_page_layout(
             num_blocks=1,
             gutter=0,
             page_rows=(),
+            font_size=effective_font_size,
         )
 
     min_gutter = 24
@@ -203,7 +215,6 @@ def calculate_page_layout(
             1,
             (safe_area.width + min_gutter) // max(1, single_block_width + min_gutter),
         )
-
     page_capacity = rows_per_block * max_blocks
     start_idx = (page - 1) * page_capacity
     end_idx = start_idx + page_capacity
@@ -214,24 +225,19 @@ def calculate_page_layout(
     else:
         needed = (len(page_rows) + rows_per_block - 1) // rows_per_block
         num_blocks = max(1, min(max_blocks, needed))
-
     if preset == PHONE_PANORAMA:
         num_blocks = 3
         panel_w = preset.resolution.width // 3
         gutter = panel_w - single_block_width
-
     elif num_blocks > 1:
         gutter = 24
-
     else:
         gutter = 0
-
     if num_blocks > 1 and page_rows:
         rows_per_block = min(
             rows_per_block,
             max(1, (len(page_rows) + num_blocks - 1) // num_blocks),
         )
-
     return PageLayout(
         single_widths=single_widths,
         single_block_width=single_block_width,
@@ -240,4 +246,5 @@ def calculate_page_layout(
         gutter=gutter,
         page_capacity=page_capacity,
         page_rows=page_rows,
+        font_size=effective_font_size,
     )

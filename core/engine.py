@@ -76,8 +76,8 @@ def render_wallpaper(
 
     draw = ImageDraw.Draw(img)
     safe_area = preset.get_safe_area()
-    header_font = get_font(size=preset.font_size, bold=True)
-    body_font = get_font(size=preset.font_size, bold=False)
+    header_font = get_font(size=layout.font_size, bold=True)
+    body_font = get_font(size=layout.font_size, bold=False)
 
     total_content_w = (
         layout.num_blocks * layout.single_block_width
@@ -138,7 +138,7 @@ def render_wallpaper(
                 for col_idx, cell in enumerate(row)
             ]
             num_lines = max((len(lines) for lines in row_lines), default=1)
-            line_step = int(preset.font_size * 1.35)
+            line_step = int(layout.font_size * 1.35)
             row_height = num_lines * line_step + 4
 
             for col_idx, lines in enumerate(row_lines):

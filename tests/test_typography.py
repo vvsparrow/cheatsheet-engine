@@ -8,7 +8,12 @@ from PIL import ImageFont
 from PIL.ImageFont import FreeTypeFont
 
 from core.engine import get_font
-from core.typography import calculate_line_height, truncate_to_width, wrap_text
+from core.typography import (
+    calculate_adaptive_font_size,
+    calculate_line_height,
+    truncate_to_width,
+    wrap_text,
+)
 
 
 @pytest.fixture
@@ -149,3 +154,45 @@ def test_calculate_line_height_invalid_spacing_raises_value_error(
     """Ensure negative line spacing raises ValueError."""
     with pytest.raises(ValueError, match="line_spacing must be non-negative"):
         calculate_line_height(font=test_font, line_spacing=-1)
+
+
+def test_calculate_adaptive_font_size_scales_up_for_few_rows() -> None:
+    """Ensure font scales up towards max limit when few rows allow it."""
+    font_size = calculate_adaptive_font_size(
+        available_height=1200,
+        row_count=25,
+        base_font_size=18,
+        max_font_size=24,
+    )
+    assert font_size == 24
+
+
+def test_calculate_adaptive_font_size_caps_at_base_for_dense_rows() -> None:
+    """Ensure font size does not shrink below base for dense datasets."""
+    font_size = calculate_adaptive_font_size(
+        available_height=1000,
+        row_count=100,
+        base_font_size=18,
+        max_font_size=24,
+    )
+    assert font_size == 18
+
+
+def test_calculate_adaptive_font_size_handles_edge_cases() -> None:
+    """Ensure zero or negative inputs safely fall back to base font size."""
+    assert (
+        calculate_adaptive_font_size(
+            available_height=0,
+            row_count=25,
+            base_font_size=18,
+        )
+        == 18
+    )
+    assert (
+        calculate_adaptive_font_size(
+            available_height=1000,
+            row_count=0,
+            base_font_size=18,
+        )
+        == 18
+    )
