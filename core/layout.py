@@ -159,7 +159,12 @@ def calculate_page_layout(
     body_font = get_font(size=preset.font_size, bold=False)
 
     target_width: int | None = None
-    max_col_w: int | None = safe_area.width // max(1, table.column_count)
+    if preset == PHONE_PANORAMA:
+        panel_w = preset.resolution.width // 3
+        usable_panel_w = panel_w - (preset.safe_zone.left + preset.safe_zone.right)
+        max_col_w = usable_panel_w // max(1, table.column_count)
+    else:
+        max_col_w = safe_area.width // max(1, table.column_count)
 
     single_widths = calculate_column_widths(
         table=table,

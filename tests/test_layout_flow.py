@@ -143,3 +143,27 @@ def test_ipad_portrait_centers_column_blocks() -> None:
     total_w = separators[-1].right - separators[0].x
     expected_start = safe_area.x + (safe_area.width - total_w) // 2
     assert separators[0].x == expected_start
+
+
+def test_phone_panorama_wide_columns_never_clipped_or_negative_x() -> None:
+    """Ensure wide two-column content stays within positive canvas bounds."""
+    headers = ["Lab_Test", "Normal_Range"]
+    rows = [
+        [
+            "Serum Iron",
+            "Adult men: approximately 65–175 µg/dL; adult women: approximately 50–170 µg/dL (lab-dependent)",
+        ],
+        [
+            "Total Iron-Binding Capacity (TIBC)",
+            "45–85 µmol/L (reference ranges vary by lab)",
+        ],
+    ]
+    table = TableData(headers=headers, rows=rows)
+
+    boxes = calculate_layout_boxes(table=table, preset=PHONE_PANORAMA, page=1)
+
+    # Ни один элемент не должен вылетать за левую границу холста (X < 0)
+    assert all(box.x >= 0 for box in boxes), "Detected negative X coordinates"
+    assert all(box.right <= PHONE_PANORAMA.resolution.width for box in boxes), (
+        "Element exceeds canvas width"
+    )
