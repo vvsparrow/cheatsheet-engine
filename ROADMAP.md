@@ -31,14 +31,14 @@
 - [X] Changelog tracking (Keep a Changelog standard, CHANGELOG.md)
 - [X] Dataset Quality Gates (duplicate checks, sort order, schema validation)
 
-## Milestone 3: Developer CLI & Packaging (v0.3.0) — Current Focus
+## Milestone 3: Developer CLI & Packaging (v0.3.0) — Released
 
 - [X] Command-line interface (CLI) for headless batch rendering
-- [ ] Interactive preview mode with auto-reload on dataset change
+- [X] Interactive preview mode with auto-reload on dataset change
 - [X] Automated batch packager: bundle wallpapers by device series
 - [X] Anki Deck Compiler (genanki): parallel export with nested subdecks
 
-## Milestone 4: Theming & Accessibility Standards (v0.4.0)
+## Milestone 4: Theming & Accessibility Standards (v0.4.0) — Current Focus
 
 - [ ] Theme Engine: ThemeConfig model with WCAG 2.1 AA/AAA contrast checks
 - [ ] High-contrast OLED palette (pure black floor optimization)

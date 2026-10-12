@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import time
 from pathlib import Path
 
 from core.anki import compile_anki_deck
@@ -98,10 +99,18 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Suppress console progress output.",
     )
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="Watch dataset file for changes and re-render automatically.",
+    )
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(
+    argv: list[str] | None = None,
+    max_watch_cycles: int | None = None,
+) -> int:
     """CLI application entrypoint returning POSIX status code.
 
     Args:
@@ -113,6 +122,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = create_parser()
     try:
         args = parser.parse_args(argv)
+        if args.watch and args.dataset is None:
+            if not args.quiet:
+                print("Error: --watch requires --dataset to be specified.")
+            return 1
     except SystemExit as exc:
         return int(exc.code) if isinstance(exc.code, int) else 0
 
@@ -150,5 +163,31 @@ def main(argv: list[str] | None = None) -> int:
             deck_name=args.deck_name,
             output_path=apkg_path,
         )
+
+    if args.watch and args.dataset is not None:
+        last_mtime = args.dataset.stat().st_mtime
+        cycles = 0
+        try:
+            while True:
+                if max_watch_cycles is not None and cycles >= max_watch_cycles:
+                    break
+                time.sleep(0.05)
+                current_mtime = args.dataset.stat().st_mtime
+                if current_mtime != last_mtime:
+                    last_mtime = current_mtime
+                    table = load_dataset_from_csv(args.dataset)
+                    for preset in presets_to_render:
+                        render_card_pack(
+                            table=table,
+                            preset=preset,
+                            output_dir=args.output_dir,
+                        )
+                    if not args.quiet:
+                        print(f"[WATCH] Re-rendered at {time.strftime('%H:%M:%S')}")
+                cycles += 1
+        except KeyboardInterrupt:
+            if not args.quiet:
+                print("\n[WATCH] Stopped.")
+            return 0
 
     return 0

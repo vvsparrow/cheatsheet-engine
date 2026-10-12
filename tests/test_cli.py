@@ -83,3 +83,36 @@ def test_cli_empty_csv_dataset_returns_exit_code_one(
     assert exit_code == 1
     captured = capsys.readouterr()
     assert "error loading dataset" in captured.out.lower()
+
+
+def test_cli_watch_without_dataset_fails(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Ensure --watch without --dataset fails with error code 1."""
+    exit_code = main(["--watch"])
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    assert "--watch requires --dataset" in captured.out.lower()
+
+
+def test_cli_watch_mode_renders_and_cycles_cleanly(tmp_path: Path) -> None:
+    """Ensure --watch executes render cycle and terminates gracefully."""
+    csv_file = tmp_path / "watch_data.csv"
+    csv_file.write_text("Lab_Test,Normal_Range\nK+,3.5-5.0\n", encoding="utf-8")
+    out_dir = tmp_path / "watch_out"
+
+    exit_code = main(
+        [
+            "--dataset",
+            str(csv_file),
+            "--preset",
+            "laptop_fhd",
+            "--output-dir",
+            str(out_dir),
+            "--watch",
+        ],
+        max_watch_cycles=1,
+    )
+
+    assert exit_code == 0
+    assert len(list(out_dir.glob("*.png"))) > 0
