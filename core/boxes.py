@@ -8,7 +8,12 @@ from PIL.ImageFont import FreeTypeFont
 from core.fonts import get_font
 from core.layout import calculate_page_layout
 from core.models import BoundingBox, TableData
-from core.presets import DevicePreset
+from core.presets import (
+    IPAD_PORTRAIT,
+    PHONE_LOCKSCREEN,
+    PHONE_PANORAMA,
+    DevicePreset,
+)
 from core.typography import truncate_to_width, wrap_text
 
 
@@ -59,11 +64,14 @@ def calculate_layout_boxes(
         layout.num_blocks * layout.single_block_width
         + (layout.num_blocks - 1) * layout.gutter
     )
-    start_x = (
-        safe_area.right - total_content_w
-        if preset.name != "Phone Panorama"
-        else safe_area.x
-    )
+
+    if preset == PHONE_PANORAMA:
+        panel_w = preset.resolution.width // 3
+        start_x = (panel_w - layout.single_block_width) // 2
+    elif preset in (IPAD_PORTRAIT, PHONE_LOCKSCREEN):
+        start_x = safe_area.x + (safe_area.width - total_content_w) // 2
+    else:
+        start_x = safe_area.right - total_content_w
 
     for block_idx in range(layout.num_blocks):
         block_x = start_x + block_idx * (layout.single_block_width + layout.gutter)

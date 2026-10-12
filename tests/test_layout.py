@@ -13,6 +13,7 @@ from core.layout import (
 from core.models import BoundingBox, TableData
 from core.presets import (
     DESKTOP_2K,
+    IPAD_PORTRAIT,
     LAPTOP_FHD,
     PHONE_LOCKSCREEN,
     PHONE_PANORAMA,
@@ -148,8 +149,8 @@ def test_calculate_column_widths_no_shrink_when_content_wider() -> None:
     assert widths == natural_widths
 
 
-def test_phone_lockscreen_stretches_to_safe_area_width() -> None:
-    """Ensure PHONE_LOCKSCREEN expands table width to fill safe area."""
+def test_phone_lockscreen_centers_compact_card() -> None:
+    """Ensure PHONE_LOCKSCREEN renders a compact card centered horizontally."""
     table = TableData(
         headers=["Verb", "Translation"],
         rows=[["take", "брать, взять"], ["bring", "приносить"]],
@@ -158,7 +159,12 @@ def test_phone_lockscreen_stretches_to_safe_area_width() -> None:
     safe_area = PHONE_LOCKSCREEN.get_safe_area()
 
     line_box = next(box for box in boxes if box.height == 2)
-    assert line_box.width == safe_area.width
+    # Карточка компактна (не раздута искусственно на всю ширину)
+    assert line_box.width < safe_area.width
+
+    # Карточка идеально отцентрирована внутри safe_area
+    expected_x = safe_area.x + (safe_area.width - line_box.width) // 2
+    assert line_box.x == expected_x
 
 
 def test_calculate_layout_boxes_multi_column_flow_desktop_2k() -> None:
@@ -190,9 +196,11 @@ def test_phone_panorama_partitions_across_three_swipe_panels() -> None:
     separators = [box for box in boxes if box.height == 2]
     assert len(separators) == 3
 
-    assert separators[0].x == 50
-    assert separators[1].x == 1130
-    assert separators[2].x == 2210
+    panel_w = PHONE_PANORAMA.resolution.width // 3
+    expected_offset = (panel_w - separators[0].width) // 2
+    assert separators[0].x == expected_offset
+    assert separators[1].x == panel_w + expected_offset
+    assert separators[2].x == 2 * panel_w + expected_offset
 
 
 def test_calculate_column_widths_accounts_for_header_font() -> None:
@@ -270,3 +278,18 @@ def test_multi_column_balances_rows_evenly_across_blocks() -> None:
     # С балансировкой: ceil(60 / 2) = 30 строк в каждом блоке.
     assert layout.num_blocks == 2
     assert layout.rows_per_block == 30
+
+
+def test_ipad_portrait_centers_column_blocks() -> None:
+    """Ensure IPAD_PORTRAIT centers column blocks horizontally."""
+    headers = ["Command", "Description"]
+    rows = [[f"cmd_{i}", f"desc_{i}"] for i in range(40)]
+    table = TableData(headers=headers, rows=rows)
+
+    boxes = calculate_layout_boxes(table=table, preset=IPAD_PORTRAIT, page=1)
+    safe_area = IPAD_PORTRAIT.get_safe_area()
+
+    separators = [box for box in boxes if box.height == 2]
+    total_w = separators[-1].right - separators[0].x
+    expected_start = safe_area.x + (safe_area.width - total_w) // 2
+    assert separators[0].x == expected_start
