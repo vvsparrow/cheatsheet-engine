@@ -5,11 +5,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from PIL import ImageFont
-from PIL.ImageFont import FreeTypeFont
-
+from core.columns import calculate_column_widths, calculate_rows_per_page
 from core.fonts import get_font
-from core.models import BoundingBox, TableData
+from core.models import TableData
 from core.presets import (
     PHONE_LOCKSCREEN,
     PHONE_PANORAMA,
@@ -28,7 +26,9 @@ class PageLayout:
         rows_per_block: Maximum vertical data rows that fit in one block.
         num_blocks: Number of horizontal column blocks rendered on this page.
         gutter: Horizontal spacing in pixels between adjacent column blocks.
+        page_capacity: Total maximum rows this page layout can accommodate.
         page_rows: Subset of table data rows allocated to this page.
+        font_size: Rendered typography size in points.
     """
 
     single_widths: tuple[int, ...]
@@ -39,81 +39,6 @@ class PageLayout:
     page_capacity: int
     page_rows: Sequence[Sequence[str]]
     font_size: int = 18
-
-
-def calculate_column_widths(
-    table: TableData,
-    font: FreeTypeFont | ImageFont.ImageFont,
-    header_font: FreeTypeFont | ImageFont.ImageFont | None = None,
-    padding: int = 20,
-    max_column_width: int | None = None,
-    target_width: int | None = None,
-) -> tuple[int, ...]:
-    """Calculate dynamic column widths based on maximum text bounding boxes.
-
-    Args:
-        table: Tabular dataset with headers and rows.
-        font: Font used to measure rendered text metrics.
-        padding: Horizontal padding in pixels added to each column.
-        max_column_width: Optional upper bound constraint for column width.
-        target_width: Optional width in pixels to stretch columns to.
-
-    Returns:
-        Tuple of integer column widths in pixels.
-    """
-    widths: list[int] = []
-    h_font = header_font if header_font is not None else font
-    for col_idx in range(table.column_count):
-        max_width = 0
-        header_bbox = h_font.getbbox(table.headers[col_idx])
-        header_width = header_bbox[2] - header_bbox[0]
-        max_width = max(max_width, header_width)
-
-        for row in table.rows:
-            cell_bbox = font.getbbox(row[col_idx])
-            cell_width = cell_bbox[2] - cell_bbox[0]
-            max_width = max(max_width, cell_width)
-        col_w = int(max_width + padding)
-        if max_column_width is not None and max_column_width > 0:
-            col_w = min(col_w, max_column_width)
-        widths.append(col_w)
-    if target_width is not None and target_width > 0 and widths:
-        total_w = sum(widths)
-        if 0 < total_w < target_width:
-            scale = target_width / total_w
-            scaled_widths = [int(w * scale) for w in widths]
-            remainder = target_width - sum(scaled_widths)
-            scaled_widths[-1] += remainder
-            widths = scaled_widths
-        elif total_w == 0:
-            base_w = target_width // len(widths)
-            scaled_widths = [base_w] * len(widths)
-            remainder = target_width - sum(scaled_widths)
-            scaled_widths[-1] += remainder
-            widths = scaled_widths
-
-    return tuple(widths)
-
-
-def calculate_rows_per_page(
-    safe_area: BoundingBox,
-    row_height: int = 28,
-    header_height: int = 45,
-) -> int:
-    """Calculate maximum table rows that fit within safe area height.
-
-    Args:
-        safe_area: Usable content bounding box.
-        row_height: Height allocated for each data row in pixels.
-        header_height: Height reserved for table header and separator.
-
-    Returns:
-        Integer count of rows that fit into the available height.
-    """
-    usable_height = safe_area.height - header_height
-    if usable_height <= 0:
-        return 0
-    return usable_height // row_height
 
 
 def calculate_page_capacity(
@@ -156,6 +81,7 @@ def calculate_page_layout(
 
     safe_area = preset.get_safe_area()
     effective_font_size = preset.font_size
+
     if table.column_count <= 3 and table.row_count > 0:
         usable_h = safe_area.height - int(preset.font_size * 2.2)
         effective_font_size = calculate_adaptive_font_size(
@@ -163,6 +89,7 @@ def calculate_page_layout(
             row_count=table.row_count,
             base_font_size=preset.font_size,
         )
+
     header_font = get_font(size=effective_font_size, bold=True)
     body_font = get_font(size=effective_font_size, bold=False)
 
@@ -195,14 +122,13 @@ def calculate_page_layout(
     )
 
     if rows_per_block <= 0:
-        page_capacity = 0
         return PageLayout(
-            page_capacity=page_capacity,
             single_widths=single_widths,
             single_block_width=single_block_width,
             rows_per_block=0,
             num_blocks=1,
             gutter=0,
+            page_capacity=0,
             page_rows=(),
             font_size=effective_font_size,
         )
@@ -215,6 +141,7 @@ def calculate_page_layout(
             1,
             (safe_area.width + min_gutter) // max(1, single_block_width + min_gutter),
         )
+
     page_capacity = rows_per_block * max_blocks
     start_idx = (page - 1) * page_capacity
     end_idx = start_idx + page_capacity
@@ -225,6 +152,7 @@ def calculate_page_layout(
     else:
         needed = (len(page_rows) + rows_per_block - 1) // rows_per_block
         num_blocks = max(1, min(max_blocks, needed))
+
     if preset == PHONE_PANORAMA:
         num_blocks = 3
         panel_w = preset.resolution.width // 3
@@ -233,11 +161,13 @@ def calculate_page_layout(
         gutter = 24
     else:
         gutter = 0
+
     if num_blocks > 1 and page_rows:
         rows_per_block = min(
             rows_per_block,
             max(1, (len(page_rows) + num_blocks - 1) // num_blocks),
         )
+
     return PageLayout(
         single_widths=single_widths,
         single_block_width=single_block_width,

@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from core.anki import AnkiCardMapping, compile_anki_deck
 from core.boxes import calculate_layout_boxes
+from core.columns import (
+    calculate_column_widths,
+    calculate_rows_per_page,
+)
 from core.engine import render_card_pack, render_wallpaper
 from core.fonts import get_font
 from core.geometry import (
@@ -13,9 +17,7 @@ from core.geometry import (
     assert_within_safe_area,
 )
 from core.layout import (
-    calculate_column_widths,
     calculate_page_capacity,
-    calculate_rows_per_page,
 )
 from core.models import BoundingBox, Resolution, SafeZone, TableData
 from core.observability import MetricsCollector, RenderReport, get_logger
