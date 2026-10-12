@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from core.boxes import calculate_layout_boxes
-from core.fonts import get_font
-from core.geometry import assert_no_collisions
-from core.layout import (
+from core.columns import (
     calculate_column_widths,
     calculate_rows_per_page,
 )
+from core.fonts import get_font
+from core.geometry import assert_no_collisions
 from core.models import BoundingBox, TableData
 from core.presets import LAPTOP_FHD
 
