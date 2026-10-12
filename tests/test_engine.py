@@ -8,9 +8,14 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from core.engine import render_card_pack, render_wallpaper
+from core.engine import render_wallpaper
 from core.models import TableData
-from core.presets import DESKTOP_2K, LAPTOP_FHD, PHONE_LOCKSCREEN
+from core.presets import (
+    DESKTOP_2K,
+    LAPTOP_FHD,
+    PHONE_LOCKSCREEN,
+)
+from core.series import render_card_pack
 
 
 def test_table_data_valid_instantiation() -> None:
