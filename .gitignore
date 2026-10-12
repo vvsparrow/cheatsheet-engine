@@ -9,3 +9,6 @@ wheels/
 # Virtual environments
 .venv
 screensavers/
+
+# Visual regression diff artifacts
+tests/snapshots/diffs/
