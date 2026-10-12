@@ -17,6 +17,7 @@ from core.layout import (
     calculate_rows_per_page,
 )
 from core.models import BoundingBox, Resolution, SafeZone, TableData
+from core.overlays import apply_device_overlay
 from core.presets import (
     DESKTOP_2K,
     IPAD_PORTRAIT,
@@ -44,6 +45,7 @@ __all__ = [
     "SafeZone",
     "SafeZoneViolationError",
     "TableData",
+    "apply_device_overlay",
     "assert_no_collisions",
     "assert_within_safe_area",
     "calculate_column_widths",

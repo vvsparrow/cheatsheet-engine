@@ -160,9 +160,6 @@ def calculate_page_layout(
 
     target_width: int | None = None
     max_col_w: int | None = safe_area.width // max(1, table.column_count)
-    if preset == PHONE_LOCKSCREEN:
-        target_width = safe_area.width
-        max_col_w = None
 
     single_widths = calculate_column_widths(
         table=table,
