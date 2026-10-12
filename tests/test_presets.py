@@ -49,13 +49,17 @@ def test_preset_safe_area_computability(preset: DevicePreset) -> None:
 
 
 def test_phone_lockscreen_safe_zone_proportions() -> None:
-    """Validate Phone Lockscreen specific safe zone padding (38% top, 15% bottom)."""
+    """Validate Phone Lockscreen safe margins (32% top, 12% bottom, 4% sides)."""
     assert PHONE_LOCKSCREEN.resolution.width == 1290
     assert PHONE_LOCKSCREEN.resolution.height == 2796
-    expected_top = int(2796 * 0.38)
-    expected_bottom = int(2796 * 0.15)
+    expected_top = int(2796 * 0.32)
+    expected_bottom = int(2796 * 0.12)
+    expected_side = int(1290 * 0.04)
+
     assert PHONE_LOCKSCREEN.safe_zone.top == expected_top
     assert PHONE_LOCKSCREEN.safe_zone.bottom == expected_bottom
+    assert PHONE_LOCKSCREEN.safe_zone.left == expected_side
+    assert PHONE_LOCKSCREEN.safe_zone.right == expected_side
 
 
 def test_desktop_and_tablet_safe_zones_reserve_system_margins() -> None:
