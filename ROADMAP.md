@@ -16,7 +16,7 @@
   - Zero-clipping text wrapping and auto-scaling
   - Cross-platform font fallback
 
-## Milestone 2: Quality Gates (v0.2.0) — Current Focus
+## Milestone 2: Quality Gates (v0.2.0) — Released
 
 - [X] Automated test suite (Pytest)
 - [X] Collision detection (text overlaps via font metrics)
@@ -31,11 +31,11 @@
 - [X] Changelog tracking (Keep a Changelog standard, CHANGELOG.md)
 - [X] Dataset Quality Gates (duplicate checks, sort order, schema validation)
 
-## Milestone 3: Developer CLI & Packaging (v0.3.0)
+## Milestone 3: Developer CLI & Packaging (v0.3.0) — Current Focus
 
 - [X] Command-line interface (CLI) for headless batch rendering
 - [ ] Interactive preview mode with auto-reload on dataset change
-- [ ] Automated batch packager: bundle wallpapers by device series
+- [X] Automated batch packager: bundle wallpapers by device series
 - [X] Anki Deck Compiler (genanki): parallel export with nested subdecks
 
 ## Milestone 4: Theming & Accessibility Standards (v0.4.0)
