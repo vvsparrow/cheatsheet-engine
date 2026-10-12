@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -9,6 +10,7 @@ from PIL import Image, ImageDraw
 from core.fonts import get_font
 from core.layout import calculate_page_capacity, calculate_page_layout
 from core.models import TableData
+from core.observability import MetricsCollector, RenderReport, get_logger
 from core.presets import (
     IPAD_PORTRAIT,
     PHONE_LOCKSCREEN,
@@ -17,12 +19,15 @@ from core.presets import (
 )
 from core.typography import truncate_to_width, wrap_text
 
+logger = get_logger("cheatsheet")
+
 
 def render_wallpaper(
     table: TableData,
     preset: DevicePreset,
     output_path: Path,
     page: int = 1,
+    collector: MetricsCollector | None = None,
 ) -> Path:
     """Render a cheatsheet wallpaper matching the given device preset geometry.
 
@@ -31,6 +36,7 @@ def render_wallpaper(
         preset: Target device layout and resolution preset.
         output_path: Destination filesystem path for the rendered image.
         page: One-based page number for paginated rendering.
+        collector: Optional metrics collector to capture execution report.
 
     Returns:
         Path to the generated image file.
@@ -41,6 +47,7 @@ def render_wallpaper(
     if page < 1:
         raise ValueError("Page number must be greater than or equal to 1.")
 
+    start_time = time.perf_counter()
     layout = calculate_page_layout(table=table, preset=preset, page=page)
 
     img = Image.new(
@@ -52,6 +59,19 @@ def render_wallpaper(
     if layout.rows_per_block <= 0:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         img.save(output_path)
+        duration_ms = (time.perf_counter() - start_time) * 1000.0
+        report = RenderReport(
+            preset_name=preset.name,
+            page_index=page,
+            total_pages=1,
+            rows_processed=0,
+            column_widths=layout.single_widths,
+            safe_zone_utilization=0.0,
+            duration_ms=duration_ms,
+        )
+        logger.info(report.summary())
+        if collector is not None:
+            collector.record(report)
         return output_path
 
     draw = ImageDraw.Draw(img)
@@ -72,6 +92,7 @@ def render_wallpaper(
     else:
         start_x = safe_area.right - total_content_w
 
+    current_y = safe_area.y
     for block_idx in range(layout.num_blocks):
         block_x = start_x + block_idx * (layout.single_block_width + layout.gutter)
         current_y = safe_area.y
@@ -137,6 +158,36 @@ def render_wallpaper(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(output_path)
+
+    duration_ms = (time.perf_counter() - start_time) * 1000.0
+    content_height = max(0, current_y - safe_area.y)
+    safe_area_area = safe_area.width * safe_area.height
+    utilization = (
+        round((total_content_w * content_height) / safe_area_area, 4)
+        if safe_area_area > 0
+        else 0.0
+    )
+
+    page_capacity = calculate_page_capacity(table=table, preset=preset)
+    total_pages = (
+        max(1, (table.row_count + page_capacity - 1) // page_capacity)
+        if page_capacity > 0
+        else 1
+    )
+
+    report = RenderReport(
+        preset_name=preset.name,
+        page_index=page,
+        total_pages=total_pages,
+        rows_processed=len(layout.page_rows),
+        column_widths=layout.single_widths,
+        safe_zone_utilization=utilization,
+        duration_ms=duration_ms,
+    )
+    logger.info(report.summary())
+    if collector is not None:
+        collector.record(report)
+
     return output_path
 
 
@@ -144,6 +195,7 @@ def render_card_pack(
     table: TableData,
     preset: DevicePreset,
     output_dir: Path,
+    collector: MetricsCollector | None = None,
 ) -> tuple[Path, ...]:
     """Render complete paginated series of wallpapers for the dataset.
 
@@ -151,6 +203,7 @@ def render_card_pack(
         table: Tabular dataset to render across multiple pages.
         preset: Target device layout and resolution preset.
         output_dir: Destination directory for the generated card series.
+        collector: Optional metrics collector to capture execution report.
 
     Returns:
         Tuple of filesystem Paths to the generated images in order.
@@ -165,6 +218,7 @@ def render_card_pack(
             preset=preset,
             output_path=single_path,
             page=1,
+            collector=collector,
         )
         return (single_path,)
 
@@ -180,6 +234,7 @@ def render_card_pack(
             preset=preset,
             output_path=card_path,
             page=page,
+            collector=collector,
         )
         paths.append(card_path)
 

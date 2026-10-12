@@ -17,6 +17,7 @@ from core.layout import (
     calculate_rows_per_page,
 )
 from core.models import BoundingBox, Resolution, SafeZone, TableData
+from core.observability import MetricsCollector, RenderReport, get_logger
 from core.overlays import apply_device_overlay
 from core.presets import (
     DESKTOP_2K,
@@ -41,6 +42,8 @@ __all__ = [
     "BoundingBox",
     "DevicePreset",
     "LayoutCollisionError",
+    "MetricsCollector",
+    "RenderReport",
     "Resolution",
     "SafeZone",
     "SafeZoneViolationError",
@@ -54,6 +57,7 @@ __all__ = [
     "calculate_page_capacity",
     "calculate_rows_per_page",
     "get_font",
+    "get_logger",
     "render_card_pack",
     "render_wallpaper",
     "truncate_to_width",

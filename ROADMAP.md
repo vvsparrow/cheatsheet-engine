@@ -26,7 +26,7 @@
 - [X] Dynamic typography sizing & multi-column row balancing (#28)
 - [X] Device UI Mockup Overlays (status bar, notch, and dock framing)
 - [X] Visual Regression Testing (Snapshot / pixel-diff assertions)
-- [ ] Structured Logging & Observability (render metrics, layout reports)
+- [X] Structured Logging & Observability (render metrics, layout reports)
 - [ ] Cross-platform CI/CD Pipeline (GitHub Actions: Linux, macOS, Windows)
 - [ ] Changelog tracking (Keep a Changelog standard, CHANGELOG.md)
 - [ ] Dataset Quality Gates (duplicate checks, sort order, schema validation)
