@@ -167,12 +167,10 @@ def test_render_wallpaper_multi_column_desktop_2k(tmp_path: Path) -> None:
     assert result.is_file()
     with Image.open(result) as img:
         assert img.size == (2560, 1440)
-        # Проверяем, что в правой трети экрана (x > 1700) есть отрисованный текст,
-        # а не сплошной фоновый цвет (18, 20, 24)
         right_crop = img.crop((1700, 100, 2400, 600))
         colors = right_crop.getcolors(maxcolors=2400 * 600)
         assert colors is not None
-        assert len(colors) > 1  # Больше 1 цвета означает наличие текста
+        assert len(colors) > 1
 
 
 def test_render_card_pack_generates_all_pages(tmp_path: Path) -> None:

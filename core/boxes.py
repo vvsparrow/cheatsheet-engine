@@ -51,12 +51,22 @@ def calculate_layout_boxes(
         return ()
 
     safe_area = preset.get_safe_area()
-    header_font = get_font(size=20, bold=True)
-    body_font = get_font(size=18, bold=False)
+    header_font = get_font(size=preset.font_size, bold=True)
+    body_font = get_font(size=preset.font_size, bold=False)
     boxes: list[BoundingBox] = []
 
+    total_content_w = (
+        layout.num_blocks * layout.single_block_width
+        + (layout.num_blocks - 1) * layout.gutter
+    )
+    start_x = (
+        safe_area.right - total_content_w
+        if preset.name != "Phone Panorama"
+        else safe_area.x
+    )
+
     for block_idx in range(layout.num_blocks):
-        block_x = safe_area.x + block_idx * (layout.single_block_width + layout.gutter)
+        block_x = start_x + block_idx * (layout.single_block_width + layout.gutter)
         current_y = safe_area.y
 
         col_x_offsets: list[int] = []
@@ -105,7 +115,7 @@ def calculate_layout_boxes(
                 for col_idx, cell in enumerate(row)
             ]
             num_lines = max((len(lines) for lines in row_lines), default=1)
-            line_step = 24
+            line_step = int(preset.font_size * 1.35)
             row_height = num_lines * line_step + 4
 
             for col_idx, lines in enumerate(row_lines):

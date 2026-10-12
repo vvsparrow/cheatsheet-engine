@@ -7,6 +7,7 @@ from core.fonts import get_font
 from core.geometry import assert_no_collisions, assert_within_safe_area
 from core.layout import (
     calculate_column_widths,
+    calculate_page_layout,
     calculate_rows_per_page,
 )
 from core.models import BoundingBox, TableData
@@ -156,7 +157,6 @@ def test_phone_lockscreen_stretches_to_safe_area_width() -> None:
     boxes = calculate_layout_boxes(table=table, preset=PHONE_LOCKSCREEN, page=1)
     safe_area = PHONE_LOCKSCREEN.get_safe_area()
 
-    # Сепаратор (высота 2px) должен растянуться на всю ширину safe_area
     line_box = next(box for box in boxes if box.height == 2)
     assert line_box.width == safe_area.width
 
@@ -170,14 +170,11 @@ def test_calculate_layout_boxes_multi_column_flow_desktop_2k() -> None:
     boxes = calculate_layout_boxes(table=table, preset=DESKTOP_2K, page=1)
     safe_area = DESKTOP_2K.get_safe_area()
 
-    # В 3-блочной верстке должно быть ровно 3 разделительные линии (по одной на блок)
     separators = [box for box in boxes if box.height == 2]
     assert len(separators) == 3
 
-    # Разделители должны идти слева направо с зазором
     assert separators[0].x < separators[1].x < separators[2].x
 
-    # Все боксы должны лежать в safe_area и не пересекаться
     assert_within_safe_area(boxes=boxes, safe_area=safe_area)
     assert_no_collisions(boxes)
 
@@ -193,7 +190,83 @@ def test_phone_panorama_partitions_across_three_swipe_panels() -> None:
     separators = [box for box in boxes if box.height == 2]
     assert len(separators) == 3
 
-    # Проверяем точную посадку в 3 экрана свайпа (1080px каждый с отступом 50px)
     assert separators[0].x == 50
     assert separators[1].x == 1130
     assert separators[2].x == 2210
+
+
+def test_calculate_column_widths_accounts_for_header_font() -> None:
+    """Ensure column width accounts for wider bold header font metrics."""
+    table = TableData(headers=["Wide Header Title"], rows=[["Short"]])
+    body_font = get_font(size=18, bold=False)
+    header_font = get_font(size=18, bold=True)
+
+    regular_widths = calculate_column_widths(table=table, font=body_font)
+    bold_widths = calculate_column_widths(
+        table=table,
+        font=body_font,
+        header_font=header_font,
+    )
+
+    assert bold_widths[0] > regular_widths[0]
+
+
+def test_multi_column_flow_uses_fixed_compact_gutter() -> None:
+    """Ensure multi-column layout maintains tight 24px gap between blocks."""
+    headers = ["V1", "V2", "V3", "Translation"]
+    rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
+    table = TableData(headers=headers, rows=rows)
+
+    boxes = calculate_layout_boxes(table=table, preset=DESKTOP_2K, page=1)
+    separators = [box for box in boxes if box.height == 2]
+
+    assert len(separators) >= 2
+    actual_gap = separators[1].x - separators[0].right
+    assert actual_gap == 24
+
+
+def test_multi_column_group_aligns_to_right_of_safe_area() -> None:
+    """Ensure column blocks align to the right edge of desktop safe area."""
+    headers = ["Command", "Description"]
+    rows = [[f"cmd_{i}", f"desc_{i}"] for i in range(20)]
+    table = TableData(headers=headers, rows=rows)
+
+    boxes = calculate_layout_boxes(table=table, preset=DESKTOP_2K, page=1)
+    safe_area = DESKTOP_2K.get_safe_area()
+    separators = [box for box in boxes if box.height == 2]
+
+    # Последний разделитель должен заканчиваться ровно у правого края safe_area
+    assert separators[-1].right == safe_area.right
+
+
+def test_laptop_fhd_fits_three_column_blocks() -> None:
+    """Ensure LAPTOP_FHD fits 3 column blocks with adapted font sizing."""
+    headers = ["Infinitive", "Past Simple", "Past Participle", "Translation"]
+    sample_row = [
+        "understand",
+        "understood",
+        "understood",
+        "понимать, осознавать",
+    ]
+    rows = [sample_row for _ in range(120)]
+    table = TableData(headers=headers, rows=rows)
+
+    boxes = calculate_layout_boxes(table=table, preset=LAPTOP_FHD, page=1)
+    separators = [box for box in boxes if box.height == 2]
+
+    assert len(separators) == 3
+
+
+def test_multi_column_balances_rows_evenly_across_blocks() -> None:
+    """Ensure multi-column layouts balance row count evenly across blocks."""
+    headers = ["Command", "Description"]
+    rows = [[f"cmd_{i}", f"Description for command {i}"] for i in range(60)]
+    table = TableData(headers=headers, rows=rows)
+
+    layout = calculate_page_layout(table=table, preset=DESKTOP_2K, page=1)
+
+    # 60 строк требуют 2 блока (при макс. высоте 43).
+    # Без балансировки было бы 43 строки в первом блоке и 17 во втором.
+    # С балансировкой: ceil(60 / 2) = 30 строк в каждом блоке.
+    assert layout.num_blocks == 2
+    assert layout.rows_per_block == 30

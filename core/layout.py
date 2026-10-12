@@ -42,6 +42,7 @@ class PageLayout:
 def calculate_column_widths(
     table: TableData,
     font: FreeTypeFont | ImageFont.ImageFont,
+    header_font: FreeTypeFont | ImageFont.ImageFont | None = None,
     padding: int = 20,
     max_column_width: int | None = None,
     target_width: int | None = None,
@@ -59,9 +60,10 @@ def calculate_column_widths(
         Tuple of integer column widths in pixels.
     """
     widths: list[int] = []
+    h_font = header_font if header_font is not None else font
     for col_idx in range(table.column_count):
         max_width = 0
-        header_bbox = font.getbbox(table.headers[col_idx])
+        header_bbox = h_font.getbbox(table.headers[col_idx])
         header_width = header_bbox[2] - header_bbox[0]
         max_width = max(max_width, header_width)
 
@@ -153,7 +155,8 @@ def calculate_page_layout(
         raise ValueError("Page number must be greater than or equal to 1.")
 
     safe_area = preset.get_safe_area()
-    body_font = get_font(size=18, bold=False)
+    header_font = get_font(size=preset.font_size, bold=True)
+    body_font = get_font(size=preset.font_size, bold=False)
 
     target_width: int | None = None
     max_col_w: int | None = safe_area.width // max(1, table.column_count)
@@ -164,17 +167,20 @@ def calculate_page_layout(
     single_widths = calculate_column_widths(
         table=table,
         font=body_font,
+        header_font=header_font,
         padding=20,
         max_column_width=max_col_w,
         target_width=target_width,
     )
     single_block_width = sum(single_widths)
 
+    header_height = int(preset.font_size * 2.2)
     rows_per_block = calculate_rows_per_page(
         safe_area=safe_area,
-        row_height=28,
-        header_height=45,
+        row_height=preset.row_height,
+        header_height=header_height,
     )
+
     if rows_per_block <= 0:
         page_capacity = 0
         return PageLayout(
@@ -187,7 +193,7 @@ def calculate_page_layout(
             page_rows=(),
         )
 
-    min_gutter = 40
+    min_gutter = 24
     if preset == PHONE_LOCKSCREEN or single_block_width >= safe_area.width:
         max_blocks = 1
     else:
@@ -211,15 +217,18 @@ def calculate_page_layout(
         num_blocks = 3
         panel_w = preset.resolution.width // 3
         gutter = panel_w - single_block_width
-        if page_rows:
-            rows_per_block = min(
-                rows_per_block,
-                max(1, (len(page_rows) + 2) // 3),
-            )
+
     elif num_blocks > 1:
-        gutter = (safe_area.width - num_blocks * single_block_width) // (num_blocks - 1)
+        gutter = 24
+
     else:
         gutter = 0
+
+    if num_blocks > 1 and page_rows:
+        rows_per_block = min(
+            rows_per_block,
+            max(1, (len(page_rows) + num_blocks - 1) // num_blocks),
+        )
 
     return PageLayout(
         single_widths=single_widths,
