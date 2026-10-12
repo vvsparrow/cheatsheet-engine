@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable
 from pathlib import Path
 
@@ -11,6 +12,11 @@ from PIL import Image
 from core.engine import render_wallpaper
 from core.models import TableData
 from core.presets import DESKTOP_2K, LAPTOP_FHD, PHONE_LOCKSCREEN
+
+pytestmark = pytest.mark.skipif(
+    not sys.platform.startswith("linux"),
+    reason="Visual golden snapshots are calibrated against Linux FreeType rasterization",
+)
 
 FIXED_DATASET = TableData(
     headers=["Command", "Description"],
