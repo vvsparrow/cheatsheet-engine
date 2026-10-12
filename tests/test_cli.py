@@ -6,6 +6,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from core.cli import main
 
@@ -17,6 +18,7 @@ def test_cli_help_flag_returns_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert exit_code == 0
     assert "usage:" in captured.out.lower()
     assert "--preset" in captured.out
+    assert "--mockups" in captured.out
 
 
 def test_cli_renders_single_preset(tmp_path: Path) -> None:
@@ -141,3 +143,31 @@ def test_cli_bundle_flag_creates_zip_archive(tmp_path: Path) -> None:
         namelist = archive.namelist()
         assert "manifest.json" in namelist
         assert any(name.endswith(".png") for name in namelist)
+
+
+def test_cli_mockups_flag_generates_overlay_images(tmp_path: Path) -> None:
+    """Ensure --mockups flag produces simulated device overlay PNG images."""
+    out_dir = tmp_path / "mockup_wallpapers"
+    exit_code = main(
+        [
+            "--preset",
+            "laptop_fhd",
+            "--output-dir",
+            str(out_dir),
+            "--mockups",
+        ]
+    )
+    assert exit_code == 0
+
+    wallpapers = list(out_dir.glob("*.png"))
+    base_wallpapers = [p for p in wallpapers if not p.name.endswith("_mockup.png")]
+    mockup_files = list(out_dir.glob("*_mockup.png"))
+
+    assert len(base_wallpapers) > 0
+    assert len(mockup_files) == len(base_wallpapers)
+
+    for mockup_file in mockup_files:
+        assert mockup_file.stat().st_size > 0
+        with Image.open(mockup_file) as img:
+            assert img.size == (1920, 1080)
+            assert img.mode == "RGB"
