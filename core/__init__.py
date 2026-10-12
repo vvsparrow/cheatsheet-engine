@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from core.anki import AnkiCardMapping, compile_anki_deck
 from core.boxes import calculate_layout_boxes
 from core.engine import render_card_pack, render_wallpaper
 from core.fonts import get_font
@@ -49,6 +50,7 @@ __all__ = [
     "LAPTOP_FHD",
     "PHONE_LOCKSCREEN",
     "PHONE_PANORAMA",
+    "AnkiCardMapping",
     "BoundingBox",
     "DatasetSchemaError",
     "DatasetValidationError",
@@ -72,6 +74,7 @@ __all__ = [
     "calculate_line_height",
     "calculate_page_capacity",
     "calculate_rows_per_page",
+    "compile_anki_deck",
     "get_font",
     "get_logger",
     "render_card_pack",
