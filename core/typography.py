@@ -123,3 +123,31 @@ def calculate_line_height(
     bbox = font.getbbox("Hg")
     text_height = max(1, bbox[3] - bbox[1])
     return int(text_height + line_spacing)
+
+
+def calculate_adaptive_font_size(
+    available_height: int,
+    row_count: int,
+    base_font_size: int,
+    max_font_size: int = 24,
+    line_height_ratio: float = 1.55,
+) -> int:
+    """Calculate adaptive font size scaling within aesthetic ergonomic bounds.
+
+    Args:
+        available_height: Usable vertical height in pixels.
+        row_count: Number of table rows to fit vertically.
+        base_font_size: Minimum baseline font size from preset geometry.
+        max_font_size: Maximum upper bound font size limit.
+        line_height_ratio: Vertical line-height factor relative to font size.
+
+    Returns:
+        Integer font size clamped within [base_font_size, max_font_size].
+    """
+    if available_height <= 0 or row_count <= 0 or base_font_size <= 0:
+        return base_font_size
+
+    height_per_row = available_height / row_count
+    fitted_size = int(height_per_row / line_height_ratio)
+
+    return max(base_font_size, min(max_font_size, fitted_size))
