@@ -7,8 +7,11 @@ import csv
 import time
 from pathlib import Path
 
+from PIL import Image
+
 from core.anki import compile_anki_deck
 from core.models import TableData
+from core.overlays import apply_device_overlay
 from core.packager import create_bundle_pack
 from core.presets import (
     DESKTOP_2K,
@@ -79,6 +82,11 @@ def create_parser() -> argparse.ArgumentParser:
         help="Destination directory for generated wallpapers and decks.",
     )
     parser.add_argument(
+        "--mockups",
+        action="store_true",
+        help="Generate simulated device UI mockup overlays alongside wallpapers.",
+    )
+    parser.add_argument(
         "--dataset",
         type=Path,
         default=None,
@@ -117,6 +125,27 @@ def create_parser() -> argparse.ArgumentParser:
         help="Custom title for the distribution bundle.",
     )
     return parser
+
+
+def _render_presets_and_mockups(
+    table: TableData,
+    presets: list[DevicePreset],
+    output_dir: Path,
+    mockups: bool = False,
+) -> None:
+    """Render wallpapers for presets and optionally generate device mockups."""
+    for preset in presets:
+        card_paths = render_card_pack(
+            table=table,
+            preset=preset,
+            output_dir=output_dir,
+        )
+        if mockups:
+            for card_path in card_paths:
+                with Image.open(card_path) as img:
+                    mockup_img = apply_device_overlay(image=img, preset=preset)
+                    mockup_path = card_path.with_name(f"{card_path.stem}_mockup.png")
+                    mockup_img.save(mockup_path)
 
 
 def main(
@@ -160,12 +189,12 @@ def main(
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    for preset in presets_to_render:
-        render_card_pack(
-            table=table,
-            preset=preset,
-            output_dir=args.output_dir,
-        )
+    _render_presets_and_mockups(
+        table=table,
+        presets=presets_to_render,
+        output_dir=args.output_dir,
+        mockups=args.mockups,
+    )
 
     if args.anki:
         deck_slug = args.deck_name.lower().replace(" ", "_").replace("::", "_")
@@ -197,12 +226,12 @@ def main(
                 if current_mtime != last_mtime:
                     last_mtime = current_mtime
                     table = load_dataset_from_csv(args.dataset)
-                    for preset in presets_to_render:
-                        render_card_pack(
-                            table=table,
-                            preset=preset,
-                            output_dir=args.output_dir,
-                        )
+                    _render_presets_and_mockups(
+                        table=table,
+                        presets=presets_to_render,
+                        output_dir=args.output_dir,
+                        mockups=args.mockups,
+                    )
                     if not args.quiet:
                         print(f"[WATCH] Re-rendered at {time.strftime('%H:%M:%S')}")
                 cycles += 1
