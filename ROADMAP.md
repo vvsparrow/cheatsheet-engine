@@ -36,7 +36,7 @@
 - [ ] Command-line interface (CLI) for headless batch rendering
 - [ ] Interactive preview mode with auto-reload on dataset change
 - [ ] Automated batch packager: bundle wallpapers by device series
-- [ ] Anki Deck Compiler (genanki): parallel export with nested subdecks
+- [X] Anki Deck Compiler (genanki): parallel export with nested subdecks
 
 ## Milestone 4: Theming & Accessibility Standards (v0.4.0)
 
