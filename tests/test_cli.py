@@ -19,6 +19,7 @@ def test_cli_help_flag_returns_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert "usage:" in captured.out.lower()
     assert "--preset" in captured.out
     assert "--mockups" in captured.out
+    assert "--theme" in captured.out
 
 
 def test_cli_renders_single_preset(tmp_path: Path) -> None:
@@ -171,3 +172,30 @@ def test_cli_mockups_flag_generates_overlay_images(tmp_path: Path) -> None:
         with Image.open(mockup_file) as img:
             assert img.size == (1920, 1080)
             assert img.mode == "RGB"
+
+
+def test_cli_renders_preset_with_custom_theme(tmp_path: Path) -> None:
+    """Ensure --theme flag renders wallpapers with designated color theme."""
+    out_dir = tmp_path / "clinical_wallpapers"
+    exit_code = main(
+        [
+            "--preset",
+            "laptop_fhd",
+            "--theme",
+            "clinical",
+            "--output-dir",
+            str(out_dir),
+        ]
+    )
+    assert exit_code == 0
+    assert len(list(out_dir.glob("*.png"))) > 0
+
+
+def test_cli_invalid_theme_returns_error_code(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Ensure invalid theme choice fails argument parsing with exit code 2."""
+    exit_code = main(["--theme", "non_existent_theme"])
+    assert exit_code == 2
+    captured = capsys.readouterr()
+    assert "invalid choice" in captured.err.lower()
