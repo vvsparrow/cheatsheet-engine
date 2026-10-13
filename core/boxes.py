@@ -35,22 +35,25 @@ def _make_text_box(
 def calculate_layout_boxes(
     table: TableData,
     preset: DevicePreset,
-    page: int = 1,
+    start_idx: int = 0,
 ) -> tuple[BoundingBox, ...]:
-    """Calculate bounding boxes for all layout elements on the specified page.
+    """Calculate bounding boxes for all layout elements from a start index.
 
     Args:
         table: Tabular dataset with headers and rows.
         preset: Target device layout and resolution preset.
-        page: One-based page number.
+        start_idx: Zero-based index of the first data row to render.
 
     Returns:
         Tuple of BoundingBox instances representing headers, line, and cells.
 
     Raises:
-        ValueError: If page is less than 1.
+        ValueError: If start_idx is negative.
     """
-    layout = calculate_page_layout(table=table, preset=preset, page=page)
+    if start_idx < 0:
+        raise ValueError("start_idx must be greater than or equal to 0.")
+
+    layout = calculate_page_layout(table=table, preset=preset, start_idx=start_idx)
     if layout.rows_per_block <= 0:
         return ()
 

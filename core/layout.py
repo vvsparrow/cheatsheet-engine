@@ -29,7 +29,7 @@ class PageLayout:
         rows_per_block: Maximum vertical data rows that fit in one block.
         num_blocks: Number of horizontal column blocks rendered on this page.
         gutter: Horizontal spacing in pixels between adjacent column blocks.
-        page_capacity: Total maximum rows this page layout can accommodate.
+        page_capacity: Total rows allocated to this page (len of page_rows).
         page_rows: Subset of table data rows allocated to this page.
         font_size: Rendered typography size in points.
     """
@@ -44,43 +44,26 @@ class PageLayout:
     font_size: int = 18
 
 
-def calculate_page_capacity(
-    table: TableData,
-    preset: DevicePreset,
-) -> int:
-    """Calculate the total row capacity across all column blocks on one page.
-
-    Args:
-        table: Tabular dataset with headers and rows.
-        preset: Target device layout and resolution preset.
-
-    Returns:
-        Integer count of rows that fit into one page.
-    """
-    layout = calculate_page_layout(table=table, preset=preset, page=1)
-    return layout.page_capacity
-
-
 def calculate_page_layout(
     table: TableData,
     preset: DevicePreset,
-    page: int = 1,
+    start_idx: int = 0,
 ) -> PageLayout:
-    """Calculate the layout grid parameters and rows for a specific page.
+    """Calculate the layout grid parameters and rows from a start index.
 
     Args:
         table: Tabular dataset with headers and rows.
         preset: Target device layout and resolution preset.
-        page: One-based page number.
+        start_idx: Zero-based index of the first data row to render.
 
     Returns:
         PageLayout instance containing widths, blocks, and row slices.
 
     Raises:
-        ValueError: If page is less than 1.
+        ValueError: If start_idx is negative.
     """
-    if page < 1:
-        raise ValueError("Page number must be greater than or equal to 1.")
+    if start_idx < 0:
+        raise ValueError("start_idx must be greater than or equal to 0.")
 
     safe_area = preset.get_safe_area()
     effective_font_size = preset.font_size
@@ -154,10 +137,8 @@ def calculate_page_layout(
             (safe_area.width + min_gutter) // max(1, single_block_width + min_gutter),
         )
 
-    page_capacity = rows_per_block * max_blocks
-    start_idx = (page - 1) * page_capacity
-    end_idx = start_idx + page_capacity
-    page_rows = table.rows[start_idx:end_idx]
+    rough_capacity = rows_per_block * max_blocks
+    page_rows = table.rows[start_idx : start_idx + rough_capacity]
 
     if not page_rows:
         num_blocks = 1
@@ -194,7 +175,6 @@ def calculate_page_layout(
 
         if dyn_limit < rows_per_block:
             rows_per_block = max(1, dyn_limit)
-            page_capacity = rows_per_block * max_blocks
             page_rows = table.rows[start_idx : start_idx + rows_per_block * num_blocks]
 
     return PageLayout(
@@ -203,7 +183,7 @@ def calculate_page_layout(
         rows_per_block=rows_per_block,
         num_blocks=num_blocks,
         gutter=gutter,
-        page_capacity=page_capacity,
+        page_capacity=len(page_rows),
         page_rows=page_rows,
         font_size=effective_font_size,
     )
