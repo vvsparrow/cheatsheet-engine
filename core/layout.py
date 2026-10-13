@@ -5,7 +5,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from core.columns import calculate_column_widths, calculate_rows_per_page
+from core.columns import (
+    calculate_column_widths,
+    calculate_dynamic_rows_per_block,
+    calculate_rows_per_page,
+)
 from core.fonts import get_font
 from core.models import TableData
 from core.presets import (
@@ -171,6 +175,27 @@ def calculate_page_layout(
             rows_per_block,
             max(1, (len(page_rows) + num_blocks - 1) // num_blocks),
         )
+    available_body_height = max(0, safe_area.height - 45)
+    if page_rows:
+        dyn_limit = rows_per_block
+        for b in range(num_blocks):
+            b_rows = page_rows[b * rows_per_block : (b + 1) * rows_per_block]
+            if not b_rows:
+                break
+            b_fit = calculate_dynamic_rows_per_block(
+                rows=b_rows,
+                font=body_font,
+                column_widths=single_widths,
+                font_size=effective_font_size,
+                available_height=available_body_height,
+                max_rows=rows_per_block,
+            )
+            dyn_limit = min(dyn_limit, b_fit)
+
+        if dyn_limit < rows_per_block:
+            rows_per_block = max(1, dyn_limit)
+            page_capacity = rows_per_block * max_blocks
+            page_rows = table.rows[start_idx : start_idx + rows_per_block * num_blocks]
 
     return PageLayout(
         single_widths=single_widths,

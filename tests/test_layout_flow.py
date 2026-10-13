@@ -24,10 +24,8 @@ def test_phone_lockscreen_centers_compact_card() -> None:
     safe_area = PHONE_LOCKSCREEN.get_safe_area()
 
     line_box = next(box for box in boxes if box.height == 2)
-    # Карточка компактна (не раздута искусственно на всю ширину)
     assert line_box.width < safe_area.width
 
-    # Карточка идеально отцентрирована внутри safe_area
     expected_x = safe_area.x + (safe_area.width - line_box.width) // 2
     assert line_box.x == expected_x
 
@@ -74,7 +72,6 @@ def test_multi_column_group_aligns_to_right_of_safe_area() -> None:
     safe_area = DESKTOP_2K.get_safe_area()
     separators = [box for box in boxes if box.height == 2]
 
-    # Последний разделитель должен заканчиваться ровно у правого края safe_area
     assert separators[-1].right == safe_area.right
 
 
@@ -104,9 +101,6 @@ def test_multi_column_balances_rows_evenly_across_blocks() -> None:
 
     layout = calculate_page_layout(table=table, preset=DESKTOP_2K, page=1)
 
-    # 60 строк требуют 2 блока (при макс. высоте 43).
-    # Без балансировки было бы 43 строки в первом блоке и 17 во втором.
-    # С балансировкой: ceil(60 / 2) = 30 строк в каждом блоке.
     assert layout.num_blocks == 2
     assert layout.rows_per_block == 30
 
@@ -154,14 +148,12 @@ def test_page_layout_adapts_font_for_four_column_table_when_width_permits() -> N
 
     layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, page=1)
 
-    # Базовый шрифт LAPTOP_FHD равен 14. При 10 коротких строках он обязан вырасти
     assert layout.font_size > LAPTOP_FHD.font_size
 
 
 def test_page_layout_steps_down_font_to_fit_width() -> None:
     """Ensure font steps down to highest intermediate size that fits width."""
     headers = ["Category", "Test", "Range", "Long Description Header"]
-    # 25 строк: по высоте просится 22px, но по ширине 22px не влезет
     rows = [
         ["Cat", "Test Name", "10-20", "Description text that fits at intermediate size"]
         for _ in range(25)
@@ -172,3 +164,24 @@ def test_page_layout_steps_down_font_to_fit_width() -> None:
 
     assert layout.font_size > LAPTOP_FHD.font_size
     assert layout.single_block_width <= LAPTOP_FHD.get_safe_area().width
+
+
+def test_layout_multiline_rows_do_not_overflow_safe_area() -> None:
+    """Ensure multiline wrapped rows never overflow beyond safe_area bottom."""
+    headers = ["Term", "Definition"]
+    rows = [
+        (
+            f"Term {i}",
+            "This is an exceptionally long definition text designed to wrap across "
+            + "multiple lines in a narrow block, massively increasing dynamic row height.",
+        )
+        for i in range(40)
+    ]
+    table = TableData(headers=headers, rows=rows)
+    boxes = calculate_layout_boxes(table=table, preset=PHONE_LOCKSCREEN, page=1)
+    safe_area = PHONE_LOCKSCREEN.get_safe_area()
+
+    max_bottom = max(box.bottom for box in boxes)
+    assert max_bottom <= safe_area.bottom, (
+        f"Content overflowed vertically: bottom {max_bottom} > safe_area.bottom {safe_area.bottom}"
+    )
