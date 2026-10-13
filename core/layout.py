@@ -92,17 +92,20 @@ def calculate_page_layout(
     header_font = get_font(size=effective_font_size, bold=True)
     body_font = get_font(size=effective_font_size, bold=False)
 
-    target_width: int | None = None
-    max_col_w = safe_area.width // max(1, table.column_count)
-
     single_widths = calculate_column_widths(
         table=table,
         font=body_font,
         header_font=header_font,
         padding=20,
-        max_column_width=max_col_w,
-        target_width=target_width,
     )
+    if sum(single_widths) > safe_area.width and table.column_count > 0:
+        total_w = sum(single_widths)
+        scale = safe_area.width / total_w
+        scaled = [max(20, int(w * scale)) for w in single_widths]
+        remainder = safe_area.width - sum(scaled)
+        scaled[-1] += remainder
+        single_widths = tuple(scaled)
+
     single_block_width = sum(single_widths)
     header_height = int(effective_font_size * 2.2)
     effective_row_height = max(
