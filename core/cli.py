@@ -18,7 +18,6 @@ from core.presets import (
     IPAD_PORTRAIT,
     LAPTOP_FHD,
     PHONE_LOCKSCREEN,
-    PHONE_PANORAMA,
     DevicePreset,
 )
 from core.series import render_card_pack
@@ -29,7 +28,6 @@ PRESET_CHOICES: dict[str, DevicePreset] = {
     "laptop_fhd": LAPTOP_FHD,
     "ipad_portrait": IPAD_PORTRAIT,
     "phone_lockscreen": PHONE_LOCKSCREEN,
-    "phone_panorama": PHONE_PANORAMA,
 }
 
 

@@ -14,7 +14,6 @@ from core.observability import MetricsCollector, RenderReport, get_logger
 from core.presets import (
     IPAD_PORTRAIT,
     PHONE_LOCKSCREEN,
-    PHONE_PANORAMA,
     DevicePreset,
 )
 from core.theme import DARK_THEME, Theme
@@ -86,10 +85,7 @@ def render_wallpaper(
         + (layout.num_blocks - 1) * layout.gutter
     )
 
-    if preset == PHONE_PANORAMA:
-        panel_w = preset.resolution.width // 3
-        start_x = (panel_w - layout.single_block_width) // 2
-    elif preset in (IPAD_PORTRAIT, PHONE_LOCKSCREEN):
+    if preset in (IPAD_PORTRAIT, PHONE_LOCKSCREEN):
         start_x = safe_area.x + (safe_area.width - total_content_w) // 2
     else:
         start_x = safe_area.right - total_content_w

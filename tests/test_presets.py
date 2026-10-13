@@ -10,7 +10,6 @@ from core.presets import (
     IPAD_PORTRAIT,
     LAPTOP_FHD,
     PHONE_LOCKSCREEN,
-    PHONE_PANORAMA,
     DevicePreset,
 )
 
@@ -19,7 +18,6 @@ ALL_PRESETS = [
     IPAD_PORTRAIT,
     LAPTOP_FHD,
     PHONE_LOCKSCREEN,
-    PHONE_PANORAMA,
 ]
 
 

@@ -11,7 +11,6 @@ from core.presets import (
     IPAD_PORTRAIT,
     LAPTOP_FHD,
     PHONE_LOCKSCREEN,
-    PHONE_PANORAMA,
 )
 
 
@@ -49,24 +48,6 @@ def test_calculate_layout_boxes_multi_column_flow_desktop_2k() -> None:
 
     assert_within_safe_area(boxes=boxes, safe_area=safe_area)
     assert_no_collisions(boxes)
-
-
-def test_phone_panorama_partitions_across_three_swipe_panels() -> None:
-    """Ensure PHONE_PANORAMA aligns 3 column blocks with 1080px swipe screens."""
-    headers = ["V1", "V2", "V3", "Translation"]
-    rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
-    table = TableData(headers=headers, rows=rows)
-
-    boxes = calculate_layout_boxes(table=table, preset=PHONE_PANORAMA, page=1)
-
-    separators = [box for box in boxes if box.height == 2]
-    assert len(separators) == 3
-
-    panel_w = PHONE_PANORAMA.resolution.width // 3
-    expected_offset = (panel_w - separators[0].width) // 2
-    assert separators[0].x == expected_offset
-    assert separators[1].x == panel_w + expected_offset
-    assert separators[2].x == 2 * panel_w + expected_offset
 
 
 def test_multi_column_flow_uses_fixed_compact_gutter() -> None:
@@ -143,27 +124,3 @@ def test_ipad_portrait_centers_column_blocks() -> None:
     total_w = separators[-1].right - separators[0].x
     expected_start = safe_area.x + (safe_area.width - total_w) // 2
     assert separators[0].x == expected_start
-
-
-def test_phone_panorama_wide_columns_never_clipped_or_negative_x() -> None:
-    """Ensure wide two-column content stays within positive canvas bounds."""
-    headers = ["Lab_Test", "Normal_Range"]
-    rows = [
-        [
-            "Serum Iron",
-            "Adult men: approximately 65–175 µg/dL; adult women: approximately 50–170 µg/dL (lab-dependent)",
-        ],
-        [
-            "Total Iron-Binding Capacity (TIBC)",
-            "45–85 µmol/L (reference ranges vary by lab)",
-        ],
-    ]
-    table = TableData(headers=headers, rows=rows)
-
-    boxes = calculate_layout_boxes(table=table, preset=PHONE_PANORAMA, page=1)
-
-    # Ни один элемент не должен вылетать за левую границу холста (X < 0)
-    assert all(box.x >= 0 for box in boxes), "Detected negative X coordinates"
-    assert all(box.right <= PHONE_PANORAMA.resolution.width for box in boxes), (
-        "Element exceeds canvas width"
-    )

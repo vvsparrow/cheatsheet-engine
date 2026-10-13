@@ -17,7 +17,6 @@ from core.presets import (
     IPAD_PORTRAIT,
     LAPTOP_FHD,
     PHONE_LOCKSCREEN,
-    PHONE_PANORAMA,
     DevicePreset,
 )
 
@@ -26,7 +25,6 @@ ALL_PRESETS: tuple[DevicePreset, ...] = (
     LAPTOP_FHD,
     IPAD_PORTRAIT,
     PHONE_LOCKSCREEN,
-    PHONE_PANORAMA,
 )
 
 

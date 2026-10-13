@@ -6,7 +6,7 @@ import pytest
 from PIL import Image
 
 from core.overlays import apply_device_overlay
-from core.presets import LAPTOP_FHD, PHONE_LOCKSCREEN, PHONE_PANORAMA
+from core.presets import LAPTOP_FHD, PHONE_LOCKSCREEN
 
 
 def test_apply_device_overlay_mismatched_resolution_raises() -> None:
@@ -61,20 +61,4 @@ def test_apply_device_overlay_desktop_draws_taskbar() -> None:
     # Bottom taskbar area (last 48px) must contain modified pixels
     taskbar_crop = result.crop((0, h - 48, w, h))
     colors = taskbar_crop.getcolors(maxcolors=256)
-    assert colors is not None and len(colors) > 1
-
-
-def test_apply_device_overlay_panorama_draws_dividers() -> None:
-    """Ensure phone panorama overlay renders vertical screen fold dividers."""
-    w, h = (
-        PHONE_PANORAMA.resolution.width,
-        PHONE_PANORAMA.resolution.height,
-    )
-    orig = Image.new("RGB", (w, h), color=(18, 20, 24))
-    result = apply_device_overlay(image=orig, preset=PHONE_PANORAMA)
-
-    # Divider fold line at x = w // 3
-    fold_x = w // 3
-    divider_crop = result.crop((fold_x - 2, 0, fold_x + 2, 100))
-    colors = divider_crop.getcolors(maxcolors=256)
     assert colors is not None and len(colors) > 1
