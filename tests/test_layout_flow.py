@@ -156,3 +156,19 @@ def test_page_layout_adapts_font_for_four_column_table_when_width_permits() -> N
 
     # Базовый шрифт LAPTOP_FHD равен 14. При 10 коротких строках он обязан вырасти
     assert layout.font_size > LAPTOP_FHD.font_size
+
+
+def test_page_layout_steps_down_font_to_fit_width() -> None:
+    """Ensure font steps down to highest intermediate size that fits width."""
+    headers = ["Category", "Test", "Range", "Long Description Header"]
+    # 25 строк: по высоте просится 22px, но по ширине 22px не влезет
+    rows = [
+        ["Cat", "Test Name", "10-20", "Description text that fits at intermediate size"]
+        for _ in range(25)
+    ]
+    table = TableData(headers=headers, rows=rows)
+
+    layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, page=1)
+
+    assert layout.font_size > LAPTOP_FHD.font_size
+    assert layout.single_block_width <= LAPTOP_FHD.get_safe_area().width

@@ -88,7 +88,7 @@ def calculate_page_layout(
             row_count=table.row_count,
             base_font_size=preset.font_size,
         )
-        if candidate_size > preset.font_size:
+        while candidate_size > preset.font_size:
             cand_widths = calculate_column_widths(
                 table=table,
                 font=get_font(size=candidate_size, bold=False),
@@ -97,6 +97,8 @@ def calculate_page_layout(
             )
             if sum(cand_widths) <= safe_area.width:
                 effective_font_size = candidate_size
+                break
+            candidate_size -= 1
 
     header_font = get_font(size=effective_font_size, bold=True)
     body_font = get_font(size=effective_font_size, bold=False)
