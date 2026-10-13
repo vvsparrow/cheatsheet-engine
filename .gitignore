@@ -12,3 +12,6 @@ screensavers/
 
 # Visual regression diff artifacts
 tests/snapshots/diffs/
+
+output/
+data/*.csv
