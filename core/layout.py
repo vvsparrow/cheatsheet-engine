@@ -81,13 +81,22 @@ def calculate_page_layout(
     safe_area = preset.get_safe_area()
     effective_font_size = preset.font_size
 
-    if table.column_count <= 3 and table.row_count > 0:
+    if table.row_count > 0:
         usable_h = safe_area.height - int(preset.font_size * 2.2)
-        effective_font_size = calculate_adaptive_font_size(
+        candidate_size = calculate_adaptive_font_size(
             available_height=usable_h,
             row_count=table.row_count,
             base_font_size=preset.font_size,
         )
+        if candidate_size > preset.font_size:
+            cand_widths = calculate_column_widths(
+                table=table,
+                font=get_font(size=candidate_size, bold=False),
+                header_font=get_font(size=candidate_size, bold=True),
+                padding=20,
+            )
+            if sum(cand_widths) <= safe_area.width:
+                effective_font_size = candidate_size
 
     header_font = get_font(size=effective_font_size, bold=True)
     body_font = get_font(size=effective_font_size, bold=False)

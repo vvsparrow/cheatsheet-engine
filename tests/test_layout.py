@@ -86,8 +86,9 @@ def test_calculate_layout_boxes_wrapped_rows_no_collisions() -> None:
     long_text = (
         "Show working tree status and list untracked or modified files "
         "across all working directories, repositories, and local branches "
-        "with deep detail and comprehensive diagnostics"
-    )
+        "with deep detail and comprehensive diagnostics. "
+    ) * 2
+
     table = TableData(
         headers=["Command", "Description"],
         rows=[
