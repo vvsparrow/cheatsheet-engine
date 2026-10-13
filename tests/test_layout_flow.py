@@ -144,3 +144,15 @@ def test_page_layout_allocates_natural_width_for_asymmetric_columns() -> None:
 
     assert layout.single_widths[2] > one_third_width
     assert layout.single_block_width <= safe_area.width
+
+
+def test_page_layout_adapts_font_for_four_column_table_when_width_permits() -> None:
+    """Ensure 4-column tables scale up font when vertical and horizontal space permits."""
+    headers = ["Col1", "Col2", "Col3", "Col4"]
+    rows = [["A", "B", "C", "D"] for _ in range(10)]
+    table = TableData(headers=headers, rows=rows)
+
+    layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, page=1)
+
+    # Базовый шрифт LAPTOP_FHD равен 14. При 10 коротких строках он обязан вырасти
+    assert layout.font_size > LAPTOP_FHD.font_size
