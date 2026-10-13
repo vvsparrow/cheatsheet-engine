@@ -107,7 +107,7 @@ def test_render_wallpaper_draws_content(tmp_path: Path) -> None:
 def test_render_wallpaper_pagination_renders_distinct_pages(
     tmp_path: Path,
 ) -> None:
-    """Ensure render_wallpaper renders distinct content for different pages."""
+    """Ensure render_wallpaper renders distinct content for different start indices."""
     table = TableData(
         headers=["Command", "Description"],
         rows=[[f"cmd_{i}", f"desc_{i}"] for i in range(50)],
@@ -115,25 +115,29 @@ def test_render_wallpaper_pagination_renders_distinct_pages(
     page_1_path = tmp_path / "page_1.png"
     page_2_path = tmp_path / "page_2.png"
 
-    render_wallpaper(table=table, preset=LAPTOP_FHD, output_path=page_1_path, page=1)
-    render_wallpaper(table=table, preset=LAPTOP_FHD, output_path=page_2_path, page=2)
+    render_wallpaper(
+        table=table, preset=LAPTOP_FHD, output_path=page_1_path, start_idx=0
+    )
+    render_wallpaper(
+        table=table, preset=LAPTOP_FHD, output_path=page_2_path, start_idx=1
+    )
 
     assert page_1_path.read_bytes() != page_2_path.read_bytes()
 
 
-def test_render_wallpaper_invalid_page_raises_value_error(
+def test_render_wallpaper_invalid_start_idx_raises_value_error(
     tmp_path: Path,
 ) -> None:
-    """Ensure render_wallpaper raises ValueError when page is less than 1."""
+    """Ensure render_wallpaper raises ValueError when start_idx is negative."""
     table = TableData(headers=["Command"], rows=[["ls"]])
     with pytest.raises(
-        ValueError, match="Page number must be greater than or equal to 1"
+        ValueError, match="start_idx must be greater than or equal to 0"
     ):
         render_wallpaper(
             table=table,
             preset=LAPTOP_FHD,
             output_path=tmp_path / "test.png",
-            page=0,
+            start_idx=-1,
         )
 
 
@@ -166,7 +170,6 @@ def test_render_wallpaper_multi_column_desktop_2k(tmp_path: Path) -> None:
         table=table,
         preset=DESKTOP_2K,
         output_path=output_path,
-        page=1,
     )
 
     assert result.is_file()

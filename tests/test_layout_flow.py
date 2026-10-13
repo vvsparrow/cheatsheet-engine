@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from core.boxes import calculate_layout_boxes
 from core.geometry import assert_no_collisions, assert_within_safe_area
 from core.layout import calculate_page_layout
@@ -20,7 +22,7 @@ def test_phone_lockscreen_centers_compact_card() -> None:
         headers=["Verb", "Translation"],
         rows=[["take", "брать, взять"], ["bring", "приносить"]],
     )
-    boxes = calculate_layout_boxes(table=table, preset=PHONE_LOCKSCREEN, page=1)
+    boxes = calculate_layout_boxes(table=table, preset=PHONE_LOCKSCREEN, start_idx=0)
     safe_area = PHONE_LOCKSCREEN.get_safe_area()
 
     line_box = next(box for box in boxes if box.height == 2)
@@ -36,7 +38,7 @@ def test_calculate_layout_boxes_multi_column_flow_desktop_2k() -> None:
     rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
     table = TableData(headers=headers, rows=rows)
 
-    boxes = calculate_layout_boxes(table=table, preset=DESKTOP_2K, page=1)
+    boxes = calculate_layout_boxes(table=table, preset=DESKTOP_2K, start_idx=0)
     safe_area = DESKTOP_2K.get_safe_area()
 
     separators = [box for box in boxes if box.height == 2]
@@ -54,7 +56,7 @@ def test_multi_column_flow_uses_fixed_compact_gutter() -> None:
     rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
     table = TableData(headers=headers, rows=rows)
 
-    boxes = calculate_layout_boxes(table=table, preset=DESKTOP_2K, page=1)
+    boxes = calculate_layout_boxes(table=table, preset=DESKTOP_2K, start_idx=0)
     separators = [box for box in boxes if box.height == 2]
 
     assert len(separators) >= 2
@@ -68,7 +70,7 @@ def test_multi_column_group_aligns_to_right_of_safe_area() -> None:
     rows = [[f"cmd_{i}", f"desc_{i}"] for i in range(20)]
     table = TableData(headers=headers, rows=rows)
 
-    boxes = calculate_layout_boxes(table=table, preset=DESKTOP_2K, page=1)
+    boxes = calculate_layout_boxes(table=table, preset=DESKTOP_2K, start_idx=0)
     safe_area = DESKTOP_2K.get_safe_area()
     separators = [box for box in boxes if box.height == 2]
 
@@ -87,7 +89,7 @@ def test_laptop_fhd_fits_three_column_blocks() -> None:
     rows = [sample_row for _ in range(120)]
     table = TableData(headers=headers, rows=rows)
 
-    boxes = calculate_layout_boxes(table=table, preset=LAPTOP_FHD, page=1)
+    boxes = calculate_layout_boxes(table=table, preset=LAPTOP_FHD, start_idx=0)
     separators = [box for box in boxes if box.height == 2]
 
     assert len(separators) == 3
@@ -99,7 +101,7 @@ def test_multi_column_balances_rows_evenly_across_blocks() -> None:
     rows = [[f"cmd_{i}", f"Description for command {i}"] for i in range(60)]
     table = TableData(headers=headers, rows=rows)
 
-    layout = calculate_page_layout(table=table, preset=DESKTOP_2K, page=1)
+    layout = calculate_page_layout(table=table, preset=DESKTOP_2K, start_idx=0)
 
     assert layout.num_blocks == 2
     assert layout.rows_per_block == 30
@@ -111,7 +113,7 @@ def test_ipad_portrait_centers_column_blocks() -> None:
     rows = [[f"cmd_{i}", f"desc_{i}"] for i in range(40)]
     table = TableData(headers=headers, rows=rows)
 
-    boxes = calculate_layout_boxes(table=table, preset=IPAD_PORTRAIT, page=1)
+    boxes = calculate_layout_boxes(table=table, preset=IPAD_PORTRAIT, start_idx=0)
     safe_area = IPAD_PORTRAIT.get_safe_area()
 
     separators = [box for box in boxes if box.height == 2]
@@ -132,7 +134,7 @@ def test_page_layout_allocates_natural_width_for_asymmetric_columns() -> None:
     ]
     table = TableData(headers=headers, rows=rows)
 
-    layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, page=1)
+    layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, start_idx=0)
     safe_area = LAPTOP_FHD.get_safe_area()
     one_third_width = safe_area.width // 3
 
@@ -146,7 +148,7 @@ def test_page_layout_adapts_font_for_four_column_table_when_width_permits() -> N
     rows = [["A", "B", "C", "D"] for _ in range(10)]
     table = TableData(headers=headers, rows=rows)
 
-    layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, page=1)
+    layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, start_idx=0)
 
     assert layout.font_size > LAPTOP_FHD.font_size
 
@@ -160,7 +162,7 @@ def test_page_layout_steps_down_font_to_fit_width() -> None:
     ]
     table = TableData(headers=headers, rows=rows)
 
-    layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, page=1)
+    layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, start_idx=0)
 
     assert layout.font_size > LAPTOP_FHD.font_size
     assert layout.single_block_width <= LAPTOP_FHD.get_safe_area().width
@@ -178,10 +180,30 @@ def test_layout_multiline_rows_do_not_overflow_safe_area() -> None:
         for i in range(40)
     ]
     table = TableData(headers=headers, rows=rows)
-    boxes = calculate_layout_boxes(table=table, preset=PHONE_LOCKSCREEN, page=1)
+    boxes = calculate_layout_boxes(table=table, preset=PHONE_LOCKSCREEN, start_idx=0)
     safe_area = PHONE_LOCKSCREEN.get_safe_area()
 
     max_bottom = max(box.bottom for box in boxes)
     assert max_bottom <= safe_area.bottom, (
         f"Content overflowed vertically: bottom {max_bottom} > safe_area.bottom {safe_area.bottom}"
     )
+
+
+def test_pagination_cursor_covers_every_row_exactly_once() -> None:
+    """Ensure cursor pagination covers every row without gaps or duplicates."""
+    headers = ["Key", "Value"]
+    rows = [(f"k{i}", "wrap " * (3 + i % 5)) for i in range(150)]
+    table = TableData(headers=headers, rows=rows)
+
+    seen: list[Sequence[str]] = []
+    cursor = 0
+    guard = 0
+    while cursor < table.row_count and guard < 100:
+        layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, start_idx=cursor)
+        if not layout.page_rows:
+            break
+        seen.extend(layout.page_rows)
+        cursor += len(layout.page_rows)
+        guard += 1
+
+    assert seen == list(table.rows)

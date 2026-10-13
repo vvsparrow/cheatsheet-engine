@@ -48,7 +48,7 @@ def test_calculate_layout_boxes_counts_and_boundaries() -> None:
         headers=["Col A", "Col B"],
         rows=[["Val 1", "Val 2"], ["Val 3", "Val 4"]],
     )
-    boxes = calculate_layout_boxes(table=table, preset=LAPTOP_FHD, page=1)
+    boxes = calculate_layout_boxes(table=table, preset=LAPTOP_FHD, start_idx=0)
 
     assert len(boxes) == 7
     for box in boxes:
@@ -96,7 +96,7 @@ def test_calculate_layout_boxes_wrapped_rows_no_collisions() -> None:
             ["git commit", "Record staged snapshot changes to repository"],
         ],
     )
-    boxes = calculate_layout_boxes(table=table, preset=LAPTOP_FHD, page=1)
+    boxes = calculate_layout_boxes(table=table, preset=LAPTOP_FHD, start_idx=0)
 
     assert len(boxes) > 7
     assert_no_collisions(boxes)

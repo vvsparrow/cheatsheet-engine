@@ -75,7 +75,7 @@ def test_layout_quality_gates_across_all_presets(preset: DevicePreset) -> None:
         headers=["Col 1", "Col 2"],
         rows=[["Row 1 Col 1", "Row 1 Col 2"], ["Row 2 Col 1", "Row 2 Col 2"]],
     )
-    boxes = calculate_layout_boxes(table=table, preset=preset, page=1)
+    boxes = calculate_layout_boxes(table=table, preset=preset, start_idx=0)
     safe_area = preset.get_safe_area()
 
     assert_no_collisions(boxes)

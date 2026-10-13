@@ -1,4 +1,4 @@
-"""Rendering engine for cheatsheet wallpapers."""
+"""Wallpaper rendering orchestration."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from core.fonts import get_font
-from core.layout import calculate_page_capacity, calculate_page_layout
+from core.layout import calculate_page_layout
 from core.models import TableData
 from core.observability import MetricsCollector, RenderReport, get_logger
 from core.presets import (
@@ -26,30 +26,37 @@ def render_wallpaper(
     table: TableData,
     preset: DevicePreset,
     output_path: Path,
-    page: int = 1,
+    start_idx: int = 0,
+    page_index: int = 1,
+    total_pages: int = 1,
     collector: MetricsCollector | None = None,
     theme: Theme = DARK_THEME,
 ) -> Path:
-    """Render a cheatsheet wallpaper matching the given device preset geometry.
+    """Render a single wallpaper page starting from the given row index.
 
     Args:
         table: Tabular dataset to render.
         preset: Target device layout and resolution preset.
         output_path: Destination filesystem path for the rendered image.
-        page: One-based page number for paginated rendering.
+        start_idx: Zero-based index of the first data row to render.
+        page_index: One-based page number for reporting.
+        total_pages: Total pages expected for the series (for reporting).
         collector: Optional metrics collector to capture execution report.
+        theme: Color palette and visual tokens used for rendering.
 
     Returns:
         Path to the generated image file.
 
     Raises:
-        ValueError: If page is less than 1.
+        ValueError: If start_idx is negative or page_index is less than 1.
     """
-    if page < 1:
-        raise ValueError("Page number must be greater than or equal to 1.")
+    if start_idx < 0:
+        raise ValueError("start_idx must be greater than or equal to 0.")
+    if page_index < 1:
+        raise ValueError("page_index must be greater than or equal to 1.")
 
     start_time = time.perf_counter()
-    layout = calculate_page_layout(table=table, preset=preset, page=page)
+    layout = calculate_page_layout(table=table, preset=preset, start_idx=start_idx)
 
     img = Image.new(
         mode="RGB",
@@ -63,8 +70,8 @@ def render_wallpaper(
         duration_ms = (time.perf_counter() - start_time) * 1000.0
         report = RenderReport(
             preset_name=preset.name,
-            page_index=page,
-            total_pages=1,
+            page_index=page_index,
+            total_pages=total_pages,
             rows_processed=0,
             column_widths=layout.single_widths,
             safe_zone_utilization=0.0,
@@ -90,7 +97,7 @@ def render_wallpaper(
     else:
         start_x = safe_area.right - total_content_w
 
-    current_y = safe_area.y
+    max_y = safe_area.y
     for block_idx in range(layout.num_blocks):
         block_x = start_x + block_idx * (layout.single_block_width + layout.gutter)
         current_y = safe_area.y
@@ -165,12 +172,13 @@ def render_wallpaper(
                         font=body_font,
                     )
             current_y += row_height
+            max_y = max(max_y, current_y)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(output_path)
 
     duration_ms = (time.perf_counter() - start_time) * 1000.0
-    content_height = max(0, current_y - safe_area.y)
+    content_height = max(0, max_y - safe_area.y)
     safe_area_area = safe_area.width * safe_area.height
     utilization = (
         round((total_content_w * content_height) / safe_area_area, 4)
@@ -178,16 +186,9 @@ def render_wallpaper(
         else 0.0
     )
 
-    page_capacity = calculate_page_capacity(table=table, preset=preset)
-    total_pages = (
-        max(1, (table.row_count + page_capacity - 1) // page_capacity)
-        if page_capacity > 0
-        else 1
-    )
-
     report = RenderReport(
         preset_name=preset.name,
-        page_index=page,
+        page_index=page_index,
         total_pages=total_pages,
         rows_processed=len(layout.page_rows),
         column_widths=layout.single_widths,

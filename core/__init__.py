@@ -16,9 +16,7 @@ from core.geometry import (
     assert_no_collisions,
     assert_within_safe_area,
 )
-from core.layout import (
-    calculate_page_capacity,
-)
+from core.layout import calculate_page_layout
 from core.models import BoundingBox, Resolution, SafeZone, TableData
 from core.observability import MetricsCollector, RenderReport, get_logger
 from core.overlays import apply_device_overlay
@@ -87,7 +85,7 @@ __all__ = [
     "calculate_column_widths",
     "calculate_layout_boxes",
     "calculate_line_height",
-    "calculate_page_capacity",
+    "calculate_page_layout",
     "calculate_rows_per_page",
     "compile_anki_deck",
     "create_bundle_pack",
