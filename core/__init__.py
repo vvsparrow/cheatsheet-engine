@@ -28,7 +28,6 @@ from core.presets import (
     IPAD_PORTRAIT,
     LAPTOP_FHD,
     PHONE_LOCKSCREEN,
-    PHONE_PANORAMA,
     DevicePreset,
 )
 from core.series import render_card_pack
@@ -64,7 +63,6 @@ __all__ = [
     "LAPTOP_FHD",
     "LIGHT_THEME",
     "PHONE_LOCKSCREEN",
-    "PHONE_PANORAMA",
     "TOKYO_NIGHT_THEME",
     "AnkiCardMapping",
     "BoundingBox",

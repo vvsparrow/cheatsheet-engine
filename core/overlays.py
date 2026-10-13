@@ -9,7 +9,6 @@ from core.presets import (
     DESKTOP_2K,
     LAPTOP_FHD,
     PHONE_LOCKSCREEN,
-    PHONE_PANORAMA,
     DevicePreset,
 )
 
@@ -155,8 +154,6 @@ def apply_device_overlay(
         _draw_desktop_taskbar(draw=draw, width=image.width, height=image.height)
     elif preset == PHONE_LOCKSCREEN:
         _draw_phone_lockscreen_ui(draw=draw, width=image.width, height=image.height)
-    elif preset == PHONE_PANORAMA:
-        _draw_panorama_dividers(draw=draw, width=image.width, height=image.height)
 
     base = image.convert("RGBA")
     composited = Image.alpha_composite(base, overlay)

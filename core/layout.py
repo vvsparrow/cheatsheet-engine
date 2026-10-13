@@ -10,7 +10,6 @@ from core.fonts import get_font
 from core.models import TableData
 from core.presets import (
     PHONE_LOCKSCREEN,
-    PHONE_PANORAMA,
     DevicePreset,
 )
 from core.typography import calculate_adaptive_font_size
@@ -94,12 +93,7 @@ def calculate_page_layout(
     body_font = get_font(size=effective_font_size, bold=False)
 
     target_width: int | None = None
-    if preset == PHONE_PANORAMA:
-        panel_w = preset.resolution.width // 3
-        usable_panel_w = panel_w - (preset.safe_zone.left + preset.safe_zone.right)
-        max_col_w = usable_panel_w // max(1, table.column_count)
-    else:
-        max_col_w = safe_area.width // max(1, table.column_count)
+    max_col_w = safe_area.width // max(1, table.column_count)
 
     single_widths = calculate_column_widths(
         table=table,
@@ -153,11 +147,7 @@ def calculate_page_layout(
         needed = (len(page_rows) + rows_per_block - 1) // rows_per_block
         num_blocks = max(1, min(max_blocks, needed))
 
-    if preset == PHONE_PANORAMA:
-        num_blocks = 3
-        panel_w = preset.resolution.width // 3
-        gutter = panel_w - single_block_width
-    elif num_blocks > 1:
+    if num_blocks > 1:
         gutter = 24
     else:
         gutter = 0

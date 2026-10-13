@@ -11,7 +11,6 @@ __all__ = [
     "IPAD_PORTRAIT",
     "LAPTOP_FHD",
     "PHONE_LOCKSCREEN",
-    "PHONE_PANORAMA",
     "DevicePreset",
 ]
 
@@ -57,11 +56,6 @@ IPAD_PORTRAIT = DevicePreset(
     safe_zone=SafeZone(top=280, bottom=80, left=80, right=80),
 )
 
-PHONE_PANORAMA = DevicePreset(
-    name="Phone Panorama",
-    resolution=Resolution(width=3240, height=2412),
-    safe_zone=SafeZone(top=160, bottom=160, left=50, right=50),
-)
 
 PHONE_LOCKSCREEN = DevicePreset(
     name="Phone Lockscreen",
