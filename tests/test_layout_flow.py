@@ -124,3 +124,23 @@ def test_ipad_portrait_centers_column_blocks() -> None:
     total_w = separators[-1].right - separators[0].x
     expected_start = safe_area.x + (safe_area.width - total_w) // 2
     assert separators[0].x == expected_start
+
+
+def test_page_layout_allocates_natural_width_for_asymmetric_columns() -> None:
+    """Ensure asymmetric columns expand naturally without equal-share clamping."""
+    headers = ["Category", "Lab_Test", "Normal_Range"]
+    rows = [
+        [
+            "Lipids",
+            "HDL Cholesterol",
+            "Men: >40 mg/dL; women: >50 mg/dL; >=60 mg/dL is considered favorable",
+        ]
+    ]
+    table = TableData(headers=headers, rows=rows)
+
+    layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, page=1)
+    safe_area = LAPTOP_FHD.get_safe_area()
+    one_third_width = safe_area.width // 3
+
+    assert layout.single_widths[2] > one_third_width
+    assert layout.single_block_width <= safe_area.width
