@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+import pytest
+
 from core.boxes import calculate_layout_boxes
 from core.geometry import assert_no_collisions, assert_within_safe_area
 from core.layout import calculate_page_layout
@@ -13,6 +15,7 @@ from core.presets import (
     IPAD_PORTRAIT,
     LAPTOP_FHD,
     PHONE_LOCKSCREEN,
+    DevicePreset,
 )
 
 
@@ -207,3 +210,17 @@ def test_pagination_cursor_covers_every_row_exactly_once() -> None:
         guard += 1
 
     assert seen == list(table.rows)
+
+
+@pytest.mark.parametrize("preset", [DESKTOP_2K, LAPTOP_FHD])
+def test_desktop_presets_reserve_taskbar_clearance(preset: DevicePreset) -> None:
+    """Ensure desktop presets reserve taskbar height plus 64px clearance."""
+    taskbar_height = 48
+    minimum_clearance = 64
+    required_bottom = taskbar_height + minimum_clearance
+
+    assert preset.safe_zone.bottom >= required_bottom, (
+        f"{preset.name} safe_zone.bottom={preset.safe_zone.bottom} "
+        f"< required {required_bottom} "
+        f"(taskbar {taskbar_height} + clearance {minimum_clearance})"
+    )
