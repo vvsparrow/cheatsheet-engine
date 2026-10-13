@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import time
 from pathlib import Path
 
 from PIL import Image
 
 from core.anki import compile_anki_deck
+from core.loader import build_default_table, load_dataset_from_csv
 from core.models import TableData
 from core.overlays import apply_device_overlay
 from core.packager import create_bundle_pack
@@ -22,7 +22,7 @@ from core.presets import (
     DevicePreset,
 )
 from core.series import render_card_pack
-from data.irregular_verbs import VERBS
+from core.theme import THEMES, Theme, get_theme
 
 PRESET_CHOICES: dict[str, DevicePreset] = {
     "desktop_2k": DESKTOP_2K,
@@ -31,36 +31,6 @@ PRESET_CHOICES: dict[str, DevicePreset] = {
     "phone_lockscreen": PHONE_LOCKSCREEN,
     "phone_panorama": PHONE_PANORAMA,
 }
-
-
-def load_dataset_from_csv(csv_path: Path) -> TableData:
-    """Load and parse tabular dataset from a CSV file.
-
-    Args:
-        csv_path: Path to the source CSV file.
-
-    Returns:
-        TableData model instance containing parsed headers and rows.
-
-    Raises:
-        ValueError: If CSV file is empty.
-    """
-    with csv_path.open("r", encoding="utf-8-sig") as f:
-        reader = csv.reader(f)
-        records = [tuple(cell.strip() for cell in row) for row in reader if row]
-
-    if not records:
-        raise ValueError(f"CSV file is empty: {csv_path}")
-
-    return TableData(headers=records[0], rows=tuple(records[1:]))
-
-
-def build_default_table() -> TableData:
-    """Build fallback default TableData from irregular verbs seed data."""
-    return TableData(
-        headers=("V1 (Infinitive)", "V2 (Past)", "V3 (Participle)", "Translation"),
-        rows=tuple(tuple(str(cell) for cell in row) for row in VERBS),
-    )
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -85,6 +55,12 @@ def create_parser() -> argparse.ArgumentParser:
         "--mockups",
         action="store_true",
         help="Generate simulated device UI mockup overlays alongside wallpapers.",
+    )
+    parser.add_argument(
+        "--theme",
+        choices=sorted(THEMES.keys()),
+        default="dark",
+        help="Color palette theme for rendered wallpapers.",
     )
     parser.add_argument(
         "--dataset",
@@ -132,20 +108,22 @@ def _render_presets_and_mockups(
     presets: list[DevicePreset],
     output_dir: Path,
     mockups: bool = False,
+    theme: Theme | None = None,
 ) -> None:
     """Render wallpapers for presets and optionally generate device mockups."""
+    active_theme = theme or get_theme("dark")
     for preset in presets:
         card_paths = render_card_pack(
             table=table,
             preset=preset,
             output_dir=output_dir,
+            theme=active_theme,
         )
         if mockups:
             for card_path in card_paths:
                 with Image.open(card_path) as img:
-                    mockup_img = apply_device_overlay(image=img, preset=preset)
-                    mockup_path = card_path.with_name(f"{card_path.stem}_mockup.png")
-                    mockup_img.save(mockup_path)
+                    mockup = apply_device_overlay(image=img, preset=preset)
+                    mockup.save(card_path.with_name(f"{card_path.stem}_mockup.png"))
 
 
 def main(
@@ -188,12 +166,14 @@ def main(
     )
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    theme = get_theme(args.theme)
 
     _render_presets_and_mockups(
         table=table,
         presets=presets_to_render,
         output_dir=args.output_dir,
         mockups=args.mockups,
+        theme=theme,
     )
 
     if args.anki:
@@ -231,6 +211,7 @@ def main(
                         presets=presets_to_render,
                         output_dir=args.output_dir,
                         mockups=args.mockups,
+                        theme=theme,
                     )
                     if not args.quiet:
                         print(f"[WATCH] Re-rendered at {time.strftime('%H:%M:%S')}")
