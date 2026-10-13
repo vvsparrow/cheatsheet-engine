@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from PIL import ImageFont
 from PIL.ImageFont import FreeTypeFont
 
 from core.models import BoundingBox, TableData
+from core.typography import wrap_text
 
 
 def calculate_column_widths(
@@ -82,3 +85,74 @@ def calculate_rows_per_page(
     if usable_height <= 0:
         return 0
     return usable_height // row_height
+
+
+def calculate_row_rendered_height(
+    row: Sequence[str],
+    font: FreeTypeFont | ImageFont.ImageFont,
+    column_widths: tuple[int, ...],
+    font_size: int,
+) -> int:
+    """Calculate the rendered pixel height of a data row with wrapped text.
+
+    Args:
+        row: Sequence of cell text values in the row.
+        font: Font used to measure rendered text metrics.
+        column_widths: Measured column widths for the row.
+        font_size: Rendered font point size.
+
+    Returns:
+        Integer pixel height of the row including internal padding.
+    """
+    line_step = int(font_size * 1.35)
+    num_lines = 1
+    for col_idx, cell in enumerate(row):
+        col_w = column_widths[col_idx] if col_idx < len(column_widths) else 100
+        lines = wrap_text(
+            text=cell,
+            font=font,
+            max_width=max(10, col_w - 20),
+        )
+        num_lines = max(num_lines, len(lines))
+    return num_lines * line_step + 4
+
+
+def calculate_dynamic_rows_per_block(
+    rows: Sequence[Sequence[str]],
+    font: FreeTypeFont | ImageFont.ImageFont,
+    column_widths: tuple[int, ...],
+    font_size: int,
+    available_height: int,
+    max_rows: int,
+) -> int:
+    """Calculate max rows fitting in height considering dynamic wrapping.
+
+    Args:
+        rows: Sequence of table rows to evaluate.
+        font: Font used to measure wrapped text.
+        column_widths: Measured column widths for the rows.
+        font_size: Rendered typography size in points.
+        available_height: Available vertical pixels for rows.
+        max_rows: Initial upper bound for rows based on single-line height.
+
+    Returns:
+        Integer count of rows that fit without overflowing available_height.
+    """
+    if not rows or available_height <= 0 or max_rows <= 0:
+        return max(0, max_rows)
+
+    accumulated_height = 0
+    count = 0
+    for row in rows[:max_rows]:
+        h = calculate_row_rendered_height(
+            row=row,
+            font=font,
+            column_widths=column_widths,
+            font_size=font_size,
+        )
+        if accumulated_height + h > available_height:
+            break
+        accumulated_height += h
+        count += 1
+
+    return max(1, count)
