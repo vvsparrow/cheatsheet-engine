@@ -12,6 +12,8 @@ from core.layout import calculate_page_layout
 from core.models import TableData
 from core.observability import MetricsCollector, RenderReport, get_logger
 from core.presets import (
+    A4_LANDSCAPE,
+    A4_PORTRAIT,
     IPAD_PORTRAIT,
     PHONE_LOCKSCREEN,
     DevicePreset,
@@ -92,7 +94,7 @@ def render_wallpaper(
         + (layout.num_blocks - 1) * layout.gutter
     )
 
-    if preset in (IPAD_PORTRAIT, PHONE_LOCKSCREEN):
+    if preset in (IPAD_PORTRAIT, PHONE_LOCKSCREEN, A4_PORTRAIT, A4_LANDSCAPE):
         start_x = safe_area.x + (safe_area.width - total_content_w) // 2
     else:
         start_x = safe_area.right - total_content_w
@@ -121,13 +123,13 @@ def render_wallpaper(
                 font=header_font,
             )
 
-        current_y += 30
+        current_y += max(30, int(layout.font_size * 1.2))
         draw.line(
             [(block_x, current_y), (block_x + layout.single_block_width, current_y)],
             fill=theme.separator,
             width=2,
         )
-        current_y += 15
+        current_y += max(15, int(layout.font_size * 0.5))
 
         b_start = block_idx * layout.rows_per_block
         b_end = b_start + layout.rows_per_block

@@ -66,6 +66,86 @@ def calculate_column_widths(
     return tuple(widths)
 
 
+def calculate_column_min_widths(
+    table: TableData,
+    font: FreeTypeFont | ImageFont.ImageFont,
+    header_font: FreeTypeFont | ImageFont.ImageFont | None = None,
+    padding: int = 20,
+) -> tuple[int, ...]:
+    """Calculate minimum column widths based on longest words and headers.
+
+    Args:
+        table: Tabular dataset with headers and rows.
+        font: Font used to measure cell word text metrics.
+        header_font: Font used to measure table header row text metrics.
+        padding: Horizontal padding in pixels added to each column.
+
+    Returns:
+        Tuple of integer minimum column widths in pixels.
+    """
+    min_widths: list[int] = []
+    h_font = header_font if header_font is not None else font
+    for col_idx in range(table.column_count):
+        h_bbox = h_font.getbbox(table.headers[col_idx])
+        max_token_w = h_bbox[2] - h_bbox[0]
+        for row in table.rows:
+            cell_text = row[col_idx]
+            for word in cell_text.split(" "):
+                if word:
+                    w_bbox = font.getbbox(word)
+                    max_token_w = max(max_token_w, w_bbox[2] - w_bbox[0])
+        min_widths.append(int(max_token_w + padding))
+    return tuple(min_widths)
+
+
+def fit_column_widths_to_boundary(
+    natural_widths: Sequence[int],
+    min_widths: Sequence[int],
+    available_width: int,
+) -> tuple[int, ...]:
+    """Fit column widths within available width preserving minimum word bounds.
+
+    Args:
+        natural_widths: Natural unwrapped width for each column.
+        min_widths: Absolute minimum width required by words and headers.
+        available_width: Target bounding width to constrain columns.
+
+    Returns:
+        Tuple of integer column widths fitting within available width.
+    """
+    if not natural_widths:
+        return ()
+
+    total_natural = sum(natural_widths)
+    if total_natural <= available_width:
+        return tuple(natural_widths)
+
+    total_min = sum(min_widths)
+    if total_min >= available_width:
+        return tuple(min_widths)
+
+    excess = total_natural - available_width
+    compressible = [
+        max(0, nat - min_w) for nat, min_w in zip(natural_widths, min_widths)
+    ]
+    total_comp = sum(compressible)
+    if total_comp == 0:
+        return tuple(min_widths)
+
+    reductions = [int(excess * comp / total_comp) for comp in compressible]
+    allocated = [nat - red for nat, red in zip(natural_widths, reductions)]
+
+    remainder = available_width - sum(allocated)
+    for i in range(len(allocated) - 1, -1, -1):
+        if remainder == 0:
+            break
+        if compressible[i] > 0:
+            allocated[i] += remainder
+            break
+
+    return tuple(allocated)
+
+
 def calculate_rows_per_page(
     safe_area: BoundingBox,
     row_height: int = 28,

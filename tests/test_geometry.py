@@ -13,6 +13,8 @@ from core.geometry import (
 )
 from core.models import BoundingBox, TableData
 from core.presets import (
+    A4_LANDSCAPE,
+    A4_PORTRAIT,
     DESKTOP_2K,
     IPAD_PORTRAIT,
     LAPTOP_FHD,
@@ -21,6 +23,8 @@ from core.presets import (
 )
 
 ALL_PRESETS: tuple[DevicePreset, ...] = (
+    A4_LANDSCAPE,
+    A4_PORTRAIT,
     DESKTOP_2K,
     LAPTOP_FHD,
     IPAD_PORTRAIT,
