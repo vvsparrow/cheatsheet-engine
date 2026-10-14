@@ -15,7 +15,7 @@ def truncate_to_width(
     """Truncate text with an ellipsis if it exceeds the maximum pixel width.
 
     Args:
-        text: Unput string to measure and truncate.
+        text: Input string to measure and truncate.
         font: Font instance used for pixel dimension calculation.
         max_width: Maximum allowed width in pixels.
         ellipsis: Trailing indicator string appended to truncated text.
@@ -24,7 +24,7 @@ def truncate_to_width(
         Original string if it fits, or truncated string with ellipsis.
 
     Raises:
-        ValueError: If max_width is less than or equl to 0.
+        ValueError: If max_width is less than or equal to 0.
     """
     if max_width <= 0:
         raise ValueError("max_width must be strictly positive.")
@@ -47,7 +47,7 @@ def truncate_to_width(
     ell_bbox = font.getbbox(ellipsis)
     if (ell_bbox[2] - ell_bbox[0]) <= max_width:
         return ellipsis
-    return ""
+    return text[:1]
 
 
 def wrap_text(
