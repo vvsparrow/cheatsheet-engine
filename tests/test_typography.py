@@ -121,6 +121,20 @@ def test_wrap_text_truncates_overflowing_single_word(
     assert bbox[2] - bbox[0] <= max_width
 
 
+def test_wrap_text_does_not_drop_word_when_no_space_for_ellipsis(
+    test_font: FreeTypeFont | ImageFont.ImageFont,
+) -> None:
+    """Ensure word is not silently dropped when even ellipsis does not fit."""
+    text = "Hi"
+    max_width = 1
+
+    lines = wrap_text(text=text, font=test_font, max_width=max_width)
+
+    assert lines != ("",)
+    assert len(lines) == 1
+    assert lines[0] != ""
+
+
 def test_wrap_text_empty_string_returns_empty_tuple(
     test_font: FreeTypeFont | ImageFont.ImageFont,
 ) -> None:
