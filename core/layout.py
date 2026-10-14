@@ -6,9 +6,11 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from core.columns import (
+    calculate_column_min_widths,
     calculate_column_widths,
     calculate_dynamic_rows_per_block,
     calculate_rows_per_page,
+    fit_column_widths_to_boundary,
 )
 from core.fonts import get_font
 from core.models import TableData
@@ -90,22 +92,27 @@ def calculate_page_layout(
     header_font = get_font(size=effective_font_size, bold=True)
     body_font = get_font(size=effective_font_size, bold=False)
 
-    single_widths = calculate_column_widths(
+    natural_widths = calculate_column_widths(
         table=table,
         font=body_font,
         header_font=header_font,
         padding=20,
     )
-    if sum(single_widths) > safe_area.width and table.column_count > 0:
-        total_w = sum(single_widths)
-        scale = safe_area.width / total_w
-        scaled = [max(20, int(w * scale)) for w in single_widths]
-        remainder = safe_area.width - sum(scaled)
-        scaled[-1] += remainder
-        single_widths = tuple(scaled)
-
+    min_widths = calculate_column_min_widths(
+        table=table,
+        font=body_font,
+        header_font=header_font,
+        padding=20,
+    )
+    single_widths = fit_column_widths_to_boundary(
+        natural_widths=natural_widths,
+        min_widths=min_widths,
+        available_width=safe_area.width,
+    )
     single_block_width = sum(single_widths)
-    header_height = int(effective_font_size * 2.2)
+    header_height = max(30, int(effective_font_size * 1.2)) + max(
+        15, int(effective_font_size * 0.5)
+    )
     effective_row_height = max(
         preset.row_height,
         int(effective_font_size * 1.55),
@@ -156,7 +163,7 @@ def calculate_page_layout(
             rows_per_block,
             max(1, (len(page_rows) + num_blocks - 1) // num_blocks),
         )
-    available_body_height = max(0, safe_area.height - 45)
+    available_body_height = max(0, safe_area.height - header_height)
     if page_rows:
         dyn_limit = rows_per_block
         for b in range(num_blocks):

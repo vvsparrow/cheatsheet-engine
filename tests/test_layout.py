@@ -9,6 +9,7 @@ from core.columns import (
 )
 from core.fonts import get_font
 from core.geometry import assert_no_collisions
+from core.layout import calculate_page_layout
 from core.models import BoundingBox, TableData
 from core.presets import LAPTOP_FHD
 
@@ -157,3 +158,23 @@ def test_calculate_column_widths_accounts_for_header_font() -> None:
     )
 
     assert bold_widths[0] > regular_widths[0]
+
+
+def test_page_layout_preserves_minimum_word_width_in_asymmetric_table() -> None:
+    """Ensure columns never shrink below their longest word plus padding."""
+    long_desc = " ".join(["PolicyExplanation"] * 50)
+    table = TableData(
+        headers=["Topic", "Rule", "Description"],
+        rows=[["StatefulInspection", "DenyAllInboundTraffic", long_desc]],
+    )
+    layout = calculate_page_layout(table=table, preset=LAPTOP_FHD, start_idx=0)
+    font = get_font(size=layout.font_size, bold=False)
+    padding = 20
+
+    bbox_col0 = font.getbbox("StatefulInspection")
+    min_w0 = (bbox_col0[2] - bbox_col0[0]) + padding
+    bbox_col1 = font.getbbox("DenyAllInboundTraffic")
+    min_w1 = (bbox_col1[2] - bbox_col1[0]) + padding
+
+    assert layout.single_widths[0] >= min_w0
+    assert layout.single_widths[1] >= min_w1

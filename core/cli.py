@@ -14,6 +14,8 @@ from core.models import TableData
 from core.overlays import apply_device_overlay
 from core.packager import create_bundle_pack
 from core.presets import (
+    A4_LANDSCAPE,
+    A4_PORTRAIT,
     DESKTOP_2K,
     IPAD_PORTRAIT,
     LAPTOP_FHD,
@@ -24,6 +26,8 @@ from core.series import render_card_pack
 from core.theme import THEMES, Theme, get_theme
 
 PRESET_CHOICES: dict[str, DevicePreset] = {
+    "a4_landscape": A4_LANDSCAPE,
+    "a4_portrait": A4_PORTRAIT,
     "desktop_2k": DESKTOP_2K,
     "laptop_fhd": LAPTOP_FHD,
     "ipad_portrait": IPAD_PORTRAIT,

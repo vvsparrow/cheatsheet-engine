@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from core.models import BoundingBox, Resolution, SafeZone
 
 __all__ = [
+    "A4_LANDSCAPE",
+    "A4_PORTRAIT",
     "DESKTOP_2K",
     "IPAD_PORTRAIT",
     "LAPTOP_FHD",
@@ -66,4 +68,22 @@ PHONE_LOCKSCREEN = DevicePreset(
         left=int(1290 * 0.04),
         right=int(1290 * 0.04),
     ),
+)
+
+
+A4_PORTRAIT = DevicePreset(
+    name="A4 Portrait",
+    resolution=Resolution(width=2480, height=3508),
+    safe_zone=SafeZone(top=118, bottom=118, left=118, right=118),
+    font_size=50,
+    row_height=78,
+)
+
+
+A4_LANDSCAPE = DevicePreset(
+    name="A4 Landscape",
+    resolution=Resolution(width=3508, height=2480),
+    safe_zone=SafeZone(top=118, bottom=118, left=118, right=118),
+    font_size=50,
+    row_height=78,
 )

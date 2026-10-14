@@ -9,6 +9,8 @@ from core.fonts import get_font
 from core.layout import calculate_page_layout
 from core.models import BoundingBox, TableData
 from core.presets import (
+    A4_LANDSCAPE,
+    A4_PORTRAIT,
     IPAD_PORTRAIT,
     PHONE_LOCKSCREEN,
     DevicePreset,
@@ -67,7 +69,7 @@ def calculate_layout_boxes(
         + (layout.num_blocks - 1) * layout.gutter
     )
 
-    if preset in (IPAD_PORTRAIT, PHONE_LOCKSCREEN):
+    if preset in (IPAD_PORTRAIT, PHONE_LOCKSCREEN, A4_PORTRAIT, A4_LANDSCAPE):
         start_x = safe_area.x + (safe_area.width - total_content_w) // 2
     else:
         start_x = safe_area.right - total_content_w
@@ -97,7 +99,7 @@ def calculate_layout_boxes(
                 )
             )
 
-        current_y += 30
+        current_y += max(30, int(layout.font_size * 1.2))
         boxes.append(
             BoundingBox(
                 x=block_x,
@@ -106,7 +108,7 @@ def calculate_layout_boxes(
                 height=2,
             )
         )
-        current_y += 15
+        current_y += max(15, int(layout.font_size * 0.5))
 
         b_start = block_idx * layout.rows_per_block
         b_end = b_start + layout.rows_per_block

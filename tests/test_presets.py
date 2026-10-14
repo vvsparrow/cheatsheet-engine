@@ -6,6 +6,8 @@ import pytest
 
 from core.models import Resolution, SafeZone
 from core.presets import (
+    A4_LANDSCAPE,
+    A4_PORTRAIT,
     DESKTOP_2K,
     IPAD_PORTRAIT,
     LAPTOP_FHD,
@@ -14,6 +16,8 @@ from core.presets import (
 )
 
 ALL_PRESETS = [
+    A4_LANDSCAPE,
+    A4_PORTRAIT,
     DESKTOP_2K,
     IPAD_PORTRAIT,
     LAPTOP_FHD,
@@ -67,3 +71,17 @@ def test_desktop_and_tablet_safe_zones_reserve_system_margins() -> None:
     assert LAPTOP_FHD.safe_zone.left >= 100
     assert LAPTOP_FHD.safe_zone.bottom >= 50
     assert IPAD_PORTRAIT.safe_zone.top >= 150
+
+
+def test_a4_presets_have_symmetric_margins_and_iso_resolution() -> None:
+    """Ensure A4 print presets use symmetric 118px margins and 300 DPI resolutions."""
+    assert A4_PORTRAIT.resolution.width == 2480
+    assert A4_PORTRAIT.resolution.height == 3508
+    assert A4_LANDSCAPE.resolution.width == 3508
+    assert A4_LANDSCAPE.resolution.height == 2480
+
+    for preset in (A4_PORTRAIT, A4_LANDSCAPE):
+        assert preset.safe_zone.top == 118
+        assert preset.safe_zone.bottom == 118
+        assert preset.safe_zone.left == 118
+        assert preset.safe_zone.right == 118

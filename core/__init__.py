@@ -22,6 +22,8 @@ from core.observability import MetricsCollector, RenderReport, get_logger
 from core.overlays import apply_device_overlay
 from core.packager import create_bundle_pack
 from core.presets import (
+    A4_LANDSCAPE,
+    A4_PORTRAIT,
     DESKTOP_2K,
     IPAD_PORTRAIT,
     LAPTOP_FHD,
@@ -54,6 +56,8 @@ from core.validation import (
 )
 
 __all__ = [
+    "A4_LANDSCAPE",
+    "A4_PORTRAIT",
     "CLINICAL_THEME",
     "DARK_THEME",
     "DESKTOP_2K",
