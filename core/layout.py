@@ -110,7 +110,7 @@ def calculate_page_layout(
         available_width=safe_area.width,
     )
     single_block_width = sum(single_widths)
-    header_height = max(30, int(effective_font_size * 1.2)) + max(
+    header_height = max(36, int(effective_font_size * 1.45)) + max(
         15, int(effective_font_size * 0.5)
     )
     effective_row_height = max(

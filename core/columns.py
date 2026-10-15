@@ -184,7 +184,8 @@ def calculate_row_rendered_height(
     Returns:
         Integer pixel height of the row including internal padding.
     """
-    line_step = int(font_size * 1.35)
+    line_step = int(font_size * 1.45)
+    pad_y = max(4, int(font_size * 0.2))
     num_lines = 1
     for col_idx, cell in enumerate(row):
         col_w = column_widths[col_idx] if col_idx < len(column_widths) else 100
@@ -194,7 +195,7 @@ def calculate_row_rendered_height(
             max_width=max(10, col_w - 20),
         )
         num_lines = max(num_lines, len(lines))
-    return num_lines * line_step + 4
+    return num_lines * line_step + 2 * pad_y
 
 
 def calculate_dynamic_rows_per_block(

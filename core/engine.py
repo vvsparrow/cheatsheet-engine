@@ -117,13 +117,13 @@ def render_wallpaper(
                 max_width=max(10, layout.single_widths[col_idx] - 20),
             )
             draw.text(
-                (col_x_offsets[col_idx], current_y),
+                (col_x_offsets[col_idx] + 10, current_y),
                 fitted_header,
                 fill=theme.text_header,
                 font=header_font,
             )
 
-        current_y += max(30, int(layout.font_size * 1.2))
+        current_y += max(36, int(layout.font_size * 1.45))
         draw.line(
             [(block_x, current_y), (block_x + layout.single_block_width, current_y)],
             fill=theme.separator,
@@ -145,8 +145,9 @@ def render_wallpaper(
                 for col_idx, cell in enumerate(row)
             ]
             num_lines = max((len(lines) for lines in row_lines), default=1)
-            line_step = int(layout.font_size * 1.35)
-            row_height = num_lines * line_step + 4
+            line_step = int(layout.font_size * 1.45)
+            pad_y = max(4, int(layout.font_size * 0.2))
+            row_height = num_lines * line_step + 2 * pad_y
 
             if row_idx % 2 == 1:
                 draw.rectangle(
@@ -166,8 +167,8 @@ def render_wallpaper(
                         continue
                     draw.text(
                         (
-                            col_x_offsets[col_idx],
-                            current_y + line_idx * line_step,
+                            col_x_offsets[col_idx] + 10,
+                            current_y + pad_y + line_idx * line_step,
                         ),
                         line,
                         fill=theme.text_primary,
