@@ -92,14 +92,14 @@ def calculate_layout_boxes(
             )
             boxes.append(
                 _make_text_box(
-                    x=col_x_offsets[col_idx],
+                    x=col_x_offsets[col_idx] + 10,
                     y=current_y,
                     text=fitted_header,
                     font=header_font,
                 )
             )
 
-        current_y += max(30, int(layout.font_size * 1.2))
+        current_y += max(36, int(layout.font_size * 1.45))
         boxes.append(
             BoundingBox(
                 x=block_x,
@@ -124,8 +124,9 @@ def calculate_layout_boxes(
                 for col_idx, cell in enumerate(row)
             ]
             num_lines = max((len(lines) for lines in row_lines), default=1)
-            line_step = int(layout.font_size * 1.35)
-            row_height = num_lines * line_step + 4
+            line_step = int(layout.font_size * 1.45)
+            pad_y = max(4, int(layout.font_size * 0.2))
+            row_height = num_lines * line_step + 2 * pad_y
 
             for col_idx, lines in enumerate(row_lines):
                 for line_idx, line in enumerate(lines):
@@ -133,8 +134,8 @@ def calculate_layout_boxes(
                         continue
                     boxes.append(
                         _make_text_box(
-                            x=col_x_offsets[col_idx],
-                            y=current_y + line_idx * line_step,
+                            x=col_x_offsets[col_idx] + 10,
+                            y=current_y + pad_y + line_idx * line_step,
                             text=line,
                             font=body_font,
                         )
