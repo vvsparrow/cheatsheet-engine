@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import argparse
 import time
+from dataclasses import replace
 from pathlib import Path
 
 from PIL import Image
@@ -13,96 +13,10 @@ from core.loader import build_default_table, load_dataset_from_csv
 from core.models import TableData
 from core.overlays import apply_device_overlay
 from core.packager import create_bundle_pack
-from core.presets import (
-    A4_LANDSCAPE,
-    A4_PORTRAIT,
-    DESKTOP_2K,
-    IPAD_PORTRAIT,
-    LAPTOP_FHD,
-    PHONE_LOCKSCREEN,
-    DevicePreset,
-)
+from core.parser import PRESET_CHOICES, create_parser
+from core.presets import DevicePreset
 from core.series import render_card_pack
-from core.theme import THEMES, Theme, get_theme
-
-PRESET_CHOICES: dict[str, DevicePreset] = {
-    "a4_landscape": A4_LANDSCAPE,
-    "a4_portrait": A4_PORTRAIT,
-    "desktop_2k": DESKTOP_2K,
-    "laptop_fhd": LAPTOP_FHD,
-    "ipad_portrait": IPAD_PORTRAIT,
-    "phone_lockscreen": PHONE_LOCKSCREEN,
-}
-
-
-def create_parser() -> argparse.ArgumentParser:
-    """Build and configure the command-line argument parser."""
-    parser = argparse.ArgumentParser(
-        prog="cheatsheet",
-        description="Cheatsheet Engine: Headless wallpaper & Anki deck generator.",
-    )
-    parser.add_argument(
-        "--preset",
-        choices=list(PRESET_CHOICES.keys()) + ["all"],
-        default="all",
-        help="Target device layout preset or 'all' for complete batch.",
-    )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=Path("screensavers"),
-        help="Destination directory for generated wallpapers and decks.",
-    )
-    parser.add_argument(
-        "--mockups",
-        action="store_true",
-        help="Generate simulated device UI mockup overlays alongside wallpapers.",
-    )
-    parser.add_argument(
-        "--theme",
-        choices=sorted(THEMES.keys()),
-        default="dark",
-        help="Color palette theme for rendered wallpapers.",
-    )
-    parser.add_argument(
-        "--dataset",
-        type=Path,
-        default=None,
-        help="Optional path to custom CSV dataset file.",
-    )
-    parser.add_argument(
-        "--anki",
-        action="store_true",
-        help="Compile matching .apkg Anki flashcard deck alongside wallpapers.",
-    )
-    parser.add_argument(
-        "--deck-name",
-        type=str,
-        default="Cheatsheet Deck",
-        help="Custom title for the compiled Anki deck.",
-    )
-    parser.add_argument(
-        "--quiet",
-        action="store_true",
-        help="Suppress console progress output.",
-    )
-    parser.add_argument(
-        "--watch",
-        action="store_true",
-        help="Watch dataset file for changes and re-render automatically.",
-    )
-    parser.add_argument(
-        "--bundle",
-        action="store_true",
-        help="Bundle rendered wallpapers and artifacts into a zip archive with manifest.",
-    )
-    parser.add_argument(
-        "--bundle-name",
-        type=str,
-        default="Cheatsheet Bundle",
-        help="Custom title for the distribution bundle.",
-    )
-    return parser
+from core.theme import Theme, get_theme
 
 
 def _render_presets_and_mockups(
@@ -166,6 +80,16 @@ def main(
         if args.preset == "all"
         else [PRESET_CHOICES[args.preset]]
     )
+    if args.scale != 1.0:
+        presets_to_render = [
+            replace(
+                p,
+                font_size=max(8, round(p.font_size * args.scale)),
+                row_height=max(12, round(p.row_height * args.scale)),
+                min_font_size=max(6, round(p.min_font_size * args.scale)),
+            )
+            for p in presets_to_render
+        ]
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     theme = get_theme(args.theme)
