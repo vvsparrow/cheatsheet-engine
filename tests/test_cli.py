@@ -199,3 +199,30 @@ def test_cli_invalid_theme_returns_error_code(
     assert exit_code == 2
     captured = capsys.readouterr()
     assert "invalid choice" in captured.err.lower()
+
+
+def test_cli_renders_preset_with_custom_scale(tmp_path: Path) -> None:
+    """Ensure --scale flag applies proportional scaling to wallpapers."""
+    out_dir = tmp_path / "scaled_wallpapers"
+    exit_code = main(
+        [
+            "--preset",
+            "laptop_fhd",
+            "--scale",
+            "-5",
+            "--output-dir",
+            str(out_dir),
+        ]
+    )
+    assert exit_code == 0
+    assert len(list(out_dir.glob("*.png"))) > 0
+
+
+def test_cli_invalid_scale_returns_error_code(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Ensure invalid scale value fails argument parsing with exit code 2."""
+    exit_code = main(["--scale", "invalid_value"])
+    assert exit_code == 2
+    captured = capsys.readouterr()
+    assert "error:" in captured.err.lower()
