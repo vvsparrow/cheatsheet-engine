@@ -9,6 +9,17 @@ from PIL import Image, ImageDraw
 
 from core.fonts import get_font
 from core.layout import calculate_page_layout
+from core.metrics import (
+    CELL_MIN_TEXT_WIDTH,
+    CELL_PAD_X,
+    CELL_PAD_X_TOTAL,
+    HEADER_LINE_OFFSET_MIN,
+    HEADER_SPACER_MIN,
+    HEADER_SPACER_RATIO,
+    LINE_STEP_RATIO,
+    ROW_PAD_Y_MIN,
+    ROW_PAD_Y_RATIO,
+)
 from core.models import TableData
 from core.observability import MetricsCollector, RenderReport, get_logger
 from core.presets import (
@@ -112,19 +123,21 @@ def render_wallpaper(
 
         for col_idx, header in enumerate(table.headers):
             draw.text(
-                (col_x_offsets[col_idx] + 10, current_y),
+                (col_x_offsets[col_idx] + CELL_PAD_X, current_y),
                 header,
                 fill=theme.text_header,
                 font=header_font,
             )
 
-        current_y += max(36, int(layout.font_size * 1.45))
+        current_y += max(
+            HEADER_LINE_OFFSET_MIN, int(layout.font_size * LINE_STEP_RATIO)
+        )
         draw.line(
             [(block_x, current_y), (block_x + layout.single_block_width, current_y)],
             fill=theme.separator,
             width=2,
         )
-        current_y += max(15, int(layout.font_size * 0.5))
+        current_y += max(HEADER_SPACER_MIN, int(layout.font_size * HEADER_SPACER_RATIO))
 
         b_start = block_idx * layout.rows_per_block
         b_end = b_start + layout.rows_per_block
@@ -135,13 +148,16 @@ def render_wallpaper(
                 wrap_text(
                     text=cell,
                     font=body_font,
-                    max_width=max(10, layout.single_widths[col_idx] - 20),
+                    max_width=max(
+                        CELL_MIN_TEXT_WIDTH,
+                        layout.single_widths[col_idx] - CELL_PAD_X_TOTAL,
+                    ),
                 )
                 for col_idx, cell in enumerate(row)
             ]
             num_lines = max((len(lines) for lines in row_lines), default=1)
-            line_step = int(layout.font_size * 1.45)
-            pad_y = max(4, int(layout.font_size * 0.2))
+            line_step = int(layout.font_size * LINE_STEP_RATIO)
+            pad_y = max(ROW_PAD_Y_MIN, int(layout.font_size * ROW_PAD_Y_RATIO))
             row_height = num_lines * line_step + 2 * pad_y
 
             if row_idx % 2 == 1:
@@ -162,7 +178,7 @@ def render_wallpaper(
                         continue
                     draw.text(
                         (
-                            col_x_offsets[col_idx] + 10,
+                            col_x_offsets[col_idx] + CELL_PAD_X,
                             current_y + pad_y + line_idx * line_step,
                         ),
                         line,

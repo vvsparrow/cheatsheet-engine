@@ -5,6 +5,11 @@ from __future__ import annotations
 from PIL import ImageFont
 from PIL.ImageFont import FreeTypeFont
 
+from core.metrics import (
+    DEFAULT_ADAPTIVE_LINE_RATIO,
+    DEFAULT_MAX_FONT_SIZE,
+)
+
 
 def _split_indivisible_word(
     word: str,
@@ -115,8 +120,8 @@ def calculate_adaptive_font_size(
     available_height: int,
     row_count: int,
     base_font_size: int,
-    max_font_size: int = 24,
-    line_height_ratio: float = 1.55,
+    max_font_size: int = DEFAULT_MAX_FONT_SIZE,
+    line_height_ratio: float = DEFAULT_ADAPTIVE_LINE_RATIO,
 ) -> int:
     """Calculate adaptive font size scaling within aesthetic ergonomic bounds.
 

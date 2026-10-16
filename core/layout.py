@@ -13,6 +13,15 @@ from core.columns import (
     fit_column_widths_to_boundary,
 )
 from core.fonts import get_font
+from core.metrics import (
+    CELL_PAD_X_TOTAL,
+    DEFAULT_ADAPTIVE_LINE_RATIO,
+    DEFAULT_GUTTER,
+    HEADER_LINE_OFFSET_MIN,
+    HEADER_SPACER_MIN,
+    HEADER_SPACER_RATIO,
+    LINE_STEP_RATIO,
+)
 from core.models import TableData
 from core.presets import (
     PHONE_LOCKSCREEN,
@@ -61,13 +70,13 @@ def _compute_page_layout(
         table=table,
         font=body_font,
         header_font=header_font,
-        padding=20,
+        padding=CELL_PAD_X_TOTAL,
     )
     min_widths = calculate_column_min_widths(
         table=table,
         font=body_font,
         header_font=header_font,
-        padding=20,
+        padding=CELL_PAD_X_TOTAL,
     )
     single_widths = fit_column_widths_to_boundary(
         natural_widths=natural_widths,
@@ -75,10 +84,12 @@ def _compute_page_layout(
         available_width=safe_area.width,
     )
     single_block_width = sum(single_widths)
-    header_height = max(36, int(font_size * 1.45)) + max(15, int(font_size * 0.5))
+    header_height = max(HEADER_LINE_OFFSET_MIN, int(font_size * LINE_STEP_RATIO)) + max(
+        HEADER_SPACER_MIN, int(font_size * HEADER_SPACER_RATIO)
+    )
     effective_row_height = max(
         preset.row_height,
-        int(font_size * 1.55),
+        int(font_size * DEFAULT_ADAPTIVE_LINE_RATIO),
     )
     rows_per_block = calculate_rows_per_page(
         safe_area=safe_area,
@@ -98,7 +109,7 @@ def _compute_page_layout(
             font_size=font_size,
         )
 
-    min_gutter = 24
+    min_gutter = DEFAULT_GUTTER
     if preset == PHONE_LOCKSCREEN or single_block_width >= safe_area.width:
         max_blocks = 1
     else:
@@ -116,7 +127,7 @@ def _compute_page_layout(
         needed = (len(page_rows) + rows_per_block - 1) // rows_per_block
         num_blocks = max(1, min(max_blocks, needed))
 
-    gutter = 24 if num_blocks > 1 else 0
+    gutter = DEFAULT_GUTTER if num_blocks > 1 else 0
 
     if num_blocks > 1 and page_rows:
         rows_per_block = min(
