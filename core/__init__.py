@@ -41,7 +41,6 @@ from core.theme import (
 )
 from core.typography import (
     calculate_line_height,
-    truncate_to_width,
     wrap_text,
 )
 from core.validation import (
@@ -98,7 +97,6 @@ __all__ = [
     "get_theme",
     "render_card_pack",
     "render_wallpaper",
-    "truncate_to_width",
     "validate_dataset",
     "validate_table_schema",
     "wrap_text",

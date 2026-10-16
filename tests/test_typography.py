@@ -11,7 +11,6 @@ from core.engine import get_font
 from core.typography import (
     calculate_adaptive_font_size,
     calculate_line_height,
-    truncate_to_width,
     wrap_text,
 )
 
@@ -20,66 +19,6 @@ from core.typography import (
 def test_font() -> FreeTypeFont | ImageFont.ImageFont:
     """Provide standard DejaVu regular font for typography tests."""
     return get_font(size=18, bold=False)
-
-
-def test_truncate_to_width_text_fits_returns_unchanged(
-    test_font: FreeTypeFont | ImageFont.ImageFont,
-) -> None:
-    """Ensure text fitting within maximum width is returned unchanged."""
-    text = "Short text"
-    bbox = test_font.getbbox(text)
-    text_width = int(bbox[2] - bbox[0])
-
-    result = truncate_to_width(text=text, font=test_font, max_width=text_width + 50)
-    assert result == text
-
-
-def test_truncate_to_width_overflowing_text_appends_ellipsis(
-    test_font: FreeTypeFont | ImageFont.ImageFont,
-) -> None:
-    """Ensure overflowing single-word text is truncated with an ellipsis."""
-    text = "Supercalifragilisticexpialidocious"
-    bbox = test_font.getbbox(text)
-    full_width = int(bbox[2] - bbox[0])
-    constrained_width = full_width // 2
-
-    result = truncate_to_width(text=text, font=test_font, max_width=constrained_width)
-
-    assert result.endswith("...")
-    res_bbox = test_font.getbbox(result)
-    res_width = res_bbox[2] - res_bbox[0]
-    assert res_width <= constrained_width
-
-
-def test_truncate_to_width_empty_string_returns_empty(
-    test_font: FreeTypeFont | ImageFont.ImageFont,
-) -> None:
-    """Ensure empty string returns empty string without error."""
-    result = truncate_to_width(text="", font=test_font, max_width=100)
-    assert result == ""
-
-
-def test_truncate_to_width_invalid_max_width_raises_value_error(
-    test_font: FreeTypeFont | ImageFont.ImageFont,
-) -> None:
-    """Ensure non-positive max_width raises ValueError."""
-    with pytest.raises(ValueError, match="max_width must be strictly positive"):
-        truncate_to_width(text="test", font=test_font, max_width=0)
-
-
-def test_truncate_to_width_handles_unicode(
-    test_font: FreeTypeFont | ImageFont.ImageFont,
-) -> None:
-    """Ensure unicode text is truncated gracefully within width bounds."""
-    text = "ПриветМирСпутниковаяСвязьТелекоммуникации"
-    bbox = test_font.getbbox(text)
-    full_width = int(bbox[2] - bbox[0])
-    constrained_width = full_width // 3
-
-    result = truncate_to_width(text=text, font=test_font, max_width=constrained_width)
-    assert result.endswith("...")
-    res_bbox = test_font.getbbox(result)
-    assert res_bbox[2] - res_bbox[0] <= constrained_width
 
 
 def test_wrap_text_fits_returns_single_line(
@@ -107,32 +46,45 @@ def test_wrap_text_wraps_multi_word_phrase(
         assert line_width <= max_width
 
 
-def test_wrap_text_truncates_overflowing_single_word(
+def test_wrap_text_hard_wraps_overflowing_single_word(
     test_font: FreeTypeFont | ImageFont.ImageFont,
 ) -> None:
-    """Ensure overflowing single word is truncated with ellipsis."""
+    """Ensure overflowing single word is hard-wrapped without ellipsis."""
     text = "Supercalifragilisticexpialidocious"
     max_width = 100
 
     lines = wrap_text(text=text, font=test_font, max_width=max_width)
-    assert len(lines) == 1
-    assert lines[0].endswith("...")
-    bbox = test_font.getbbox(lines[0])
-    assert bbox[2] - bbox[0] <= max_width
+    assert len(lines) > 1
+    assert "".join(lines) == text
+    assert not any("..." in line for line in lines)
+    for line in lines:
+        bbox = test_font.getbbox(line)
+        assert (bbox[2] - bbox[0]) <= max_width or len(line) == 1
 
 
-def test_wrap_text_does_not_drop_word_when_no_space_for_ellipsis(
+def test_wrap_text_hard_wraps_overflowing_unicode_word(
     test_font: FreeTypeFont | ImageFont.ImageFont,
 ) -> None:
-    """Ensure word is not silently dropped when even ellipsis does not fit."""
+    """Ensure overflowing unicode word is hard-wrapped without data loss."""
+    text = "ПриветМирСпутниковаяСвязьТелекоммуникации"
+    max_width = 120
+
+    lines = wrap_text(text=text, font=test_font, max_width=max_width)
+    assert len(lines) > 1
+    assert "".join(lines) == text
+    assert not any("..." in line for line in lines)
+
+
+def test_wrap_text_handles_narrow_boundary_gracefully(
+    test_font: FreeTypeFont | ImageFont.ImageFont,
+) -> None:
+    """Ensure word is preserved character-by-character on narrow boundary."""
     text = "Hi"
     max_width = 1
 
     lines = wrap_text(text=text, font=test_font, max_width=max_width)
-
-    assert lines != ("",)
-    assert len(lines) == 1
-    assert lines[0] != ""
+    assert "".join(lines) == text
+    assert len(lines) == 2
 
 
 def test_wrap_text_empty_string_returns_empty_tuple(

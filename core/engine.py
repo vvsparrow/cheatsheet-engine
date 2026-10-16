@@ -19,7 +19,7 @@ from core.presets import (
     DevicePreset,
 )
 from core.theme import DARK_THEME, Theme
-from core.typography import truncate_to_width, wrap_text
+from core.typography import wrap_text
 
 logger = get_logger("cheatsheet")
 
@@ -111,14 +111,9 @@ def render_wallpaper(
             curr_x += w
 
         for col_idx, header in enumerate(table.headers):
-            fitted_header = truncate_to_width(
-                text=header,
-                font=header_font,
-                max_width=max(10, layout.single_widths[col_idx] - 20),
-            )
             draw.text(
                 (col_x_offsets[col_idx] + 10, current_y),
-                fitted_header,
+                header,
                 fill=theme.text_header,
                 font=header_font,
             )
