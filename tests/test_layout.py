@@ -11,7 +11,7 @@ from core.fonts import get_font
 from core.geometry import assert_no_collisions
 from core.layout import calculate_page_layout
 from core.models import BoundingBox, TableData
-from core.presets import LAPTOP_FHD
+from core.presets import DESKTOP_2K, LAPTOP_FHD
 
 
 def test_calculate_column_widths_respects_content_and_padding() -> None:
@@ -178,3 +178,14 @@ def test_page_layout_preserves_minimum_word_width_in_asymmetric_table() -> None:
 
     assert layout.single_widths[0] >= min_w0
     assert layout.single_widths[1] >= min_w1
+
+
+def test_page_layout_downscales_font_to_fit_dataset_on_single_page() -> None:
+    """Ensure layout downscales font to fit rows on one page when feasible."""
+    rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
+    table = TableData(headers=["V1", "V2", "V3", "Translation"], rows=rows)
+    layout = calculate_page_layout(table=table, preset=DESKTOP_2K, start_idx=0)
+
+    assert layout.page_capacity == 120
+    assert layout.num_blocks == 3
+    assert layout.font_size < DESKTOP_2K.font_size

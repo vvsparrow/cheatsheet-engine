@@ -32,6 +32,7 @@ class DevicePreset:
     safe_zone: SafeZone
     font_size: int = 18
     row_height: int = 28
+    min_font_size: int = 12
 
     def get_safe_area(self) -> BoundingBox:
         """Calculate the usable content area within safe margins."""
@@ -50,6 +51,7 @@ LAPTOP_FHD = DevicePreset(
     safe_zone=SafeZone(top=80, bottom=112, left=120, right=50),
     font_size=14,
     row_height=21,
+    min_font_size=12,
 )
 
 IPAD_PORTRAIT = DevicePreset(
@@ -77,6 +79,7 @@ A4_PORTRAIT = DevicePreset(
     safe_zone=SafeZone(top=118, bottom=118, left=118, right=118),
     font_size=50,
     row_height=78,
+    min_font_size=32,
 )
 
 
@@ -86,4 +89,5 @@ A4_LANDSCAPE = DevicePreset(
     safe_zone=SafeZone(top=118, bottom=118, left=118, right=118),
     font_size=50,
     row_height=78,
+    min_font_size=32,
 )
