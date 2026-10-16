@@ -1,4 +1,4 @@
-"""Defensive typography and text truncation utilities."""
+"""Defensive typography and text wrapping utilities."""
 
 from __future__ import annotations
 
@@ -6,48 +6,25 @@ from PIL import ImageFont
 from PIL.ImageFont import FreeTypeFont
 
 
-def truncate_to_width(
-    text: str,
+def _split_indivisible_word(
+    word: str,
     font: FreeTypeFont | ImageFont.ImageFont,
     max_width: int,
-    ellipsis: str = "...",
-) -> str:
-    """Truncate text with an ellipsis if it exceeds the maximum pixel width.
-
-    Args:
-        text: Input string to measure and truncate.
-        font: Font instance used for pixel dimension calculation.
-        max_width: Maximum allowed width in pixels.
-        ellipsis: Trailing indicator string appended to truncated text.
-
-    Returns:
-        Original string if it fits, or truncated string with ellipsis.
-
-    Raises:
-        ValueError: If max_width is less than or equal to 0.
-    """
-    if max_width <= 0:
-        raise ValueError("max_width must be strictly positive.")
-
-    if not text:
-        return ""
-
-    bbox = font.getbbox(text)
-    if (bbox[2] - bbox[0]) <= max_width:
-        return text
-
-    truncated = text
-    while truncated:
-        truncated = truncated[:-1]
-        candidate = f"{truncated}{ellipsis}"
-        cand_bbox = font.getbbox(candidate)
-        if (cand_bbox[2] - cand_bbox[0]) <= max_width:
-            return candidate
-
-    ell_bbox = font.getbbox(ellipsis)
-    if (ell_bbox[2] - ell_bbox[0]) <= max_width:
-        return ellipsis
-    return text[:1]
+) -> list[str]:
+    """Split an overflowing indivisible word character-by-character."""
+    chunks: list[str] = []
+    current = ""
+    for char in word:
+        candidate = current + char
+        bbox = font.getbbox(candidate)
+        if (bbox[2] - bbox[0]) <= max_width or not current:
+            current = candidate
+        else:
+            chunks.append(current)
+            current = char
+    if current:
+        chunks.append(current)
+    return chunks
 
 
 def wrap_text(
@@ -82,18 +59,27 @@ def wrap_text(
         if not word:
             continue
 
-        fitted_word = truncate_to_width(text=word, font=font, max_width=max_width)
+        candidate = f"{current_line} {word}" if current_line else word
+        bbox = font.getbbox(candidate)
+        if (bbox[2] - bbox[0]) <= max_width:
+            current_line = candidate
+            continue
 
-        if not current_line:
-            current_line = fitted_word
+        if current_line:
+            lines.append(current_line)
+            current_line = ""
+
+        word_bbox = font.getbbox(word)
+        if (word_bbox[2] - word_bbox[0]) <= max_width:
+            current_line = word
         else:
-            candidate = f"{current_line} {fitted_word}"
-            bbox = font.getbbox(candidate)
-            if (bbox[2] - bbox[0]) <= max_width:
-                current_line = candidate
-            else:
-                lines.append(current_line)
-                current_line = fitted_word
+            chunks = _split_indivisible_word(
+                word=word,
+                font=font,
+                max_width=max_width,
+            )
+            lines.extend(chunks[:-1])
+            current_line = chunks[-1]
 
     if current_line:
         lines.append(current_line)
