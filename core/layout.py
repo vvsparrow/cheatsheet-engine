@@ -46,51 +46,16 @@ class PageLayout:
     font_size: int = 18
 
 
-def calculate_page_layout(
+def _compute_page_layout(
     table: TableData,
     preset: DevicePreset,
+    font_size: int,
     start_idx: int = 0,
 ) -> PageLayout:
-    """Calculate the layout grid parameters and rows from a start index.
-
-    Args:
-        table: Tabular dataset with headers and rows.
-        preset: Target device layout and resolution preset.
-        start_idx: Zero-based index of the first data row to render.
-
-    Returns:
-        PageLayout instance containing widths, blocks, and row slices.
-
-    Raises:
-        ValueError: If start_idx is negative.
-    """
-    if start_idx < 0:
-        raise ValueError("start_idx must be greater than or equal to 0.")
-
+    """Compute geometric layout matrix for a given preset and font point size."""
     safe_area = preset.get_safe_area()
-    effective_font_size = preset.font_size
-
-    if table.row_count > 0:
-        usable_h = safe_area.height - int(preset.font_size * 2.2)
-        candidate_size = calculate_adaptive_font_size(
-            available_height=usable_h,
-            row_count=table.row_count,
-            base_font_size=preset.font_size,
-        )
-        while candidate_size > preset.font_size:
-            cand_widths = calculate_column_widths(
-                table=table,
-                font=get_font(size=candidate_size, bold=False),
-                header_font=get_font(size=candidate_size, bold=True),
-                padding=20,
-            )
-            if sum(cand_widths) <= safe_area.width:
-                effective_font_size = candidate_size
-                break
-            candidate_size -= 1
-
-    header_font = get_font(size=effective_font_size, bold=True)
-    body_font = get_font(size=effective_font_size, bold=False)
+    header_font = get_font(size=font_size, bold=True)
+    body_font = get_font(size=font_size, bold=False)
 
     natural_widths = calculate_column_widths(
         table=table,
@@ -110,12 +75,10 @@ def calculate_page_layout(
         available_width=safe_area.width,
     )
     single_block_width = sum(single_widths)
-    header_height = max(36, int(effective_font_size * 1.45)) + max(
-        15, int(effective_font_size * 0.5)
-    )
+    header_height = max(36, int(font_size * 1.45)) + max(15, int(font_size * 0.5))
     effective_row_height = max(
         preset.row_height,
-        int(effective_font_size * 1.55),
+        int(font_size * 1.55),
     )
     rows_per_block = calculate_rows_per_page(
         safe_area=safe_area,
@@ -132,7 +95,7 @@ def calculate_page_layout(
             gutter=0,
             page_capacity=0,
             page_rows=(),
-            font_size=effective_font_size,
+            font_size=font_size,
         )
 
     min_gutter = 24
@@ -153,16 +116,14 @@ def calculate_page_layout(
         needed = (len(page_rows) + rows_per_block - 1) // rows_per_block
         num_blocks = max(1, min(max_blocks, needed))
 
-    if num_blocks > 1:
-        gutter = 24
-    else:
-        gutter = 0
+    gutter = 24 if num_blocks > 1 else 0
 
     if num_blocks > 1 and page_rows:
         rows_per_block = min(
             rows_per_block,
             max(1, (len(page_rows) + num_blocks - 1) // num_blocks),
         )
+
     available_body_height = max(0, safe_area.height - header_height)
     if page_rows:
         dyn_limit = rows_per_block
@@ -174,7 +135,7 @@ def calculate_page_layout(
                 rows=b_rows,
                 font=body_font,
                 column_widths=single_widths,
-                font_size=effective_font_size,
+                font_size=font_size,
                 available_height=available_body_height,
                 max_rows=rows_per_block,
             )
@@ -192,5 +153,67 @@ def calculate_page_layout(
         gutter=gutter,
         page_capacity=len(page_rows),
         page_rows=page_rows,
-        font_size=effective_font_size,
+        font_size=font_size,
+    )
+
+
+def calculate_page_layout(
+    table: TableData,
+    preset: DevicePreset,
+    start_idx: int = 0,
+) -> PageLayout:
+    """Calculate layout matrix with bidirectional adaptive font scaling.
+
+    Args:
+        table: Tabular dataset with headers and rows.
+        preset: Target device layout and resolution preset.
+        start_idx: Zero-based index of the first data row to render.
+
+    Returns:
+        PageLayout instance containing widths, blocks, and row slices.
+
+    Raises:
+        ValueError: If start_idx is negative.
+    """
+    if start_idx < 0:
+        raise ValueError("start_idx must be greater than or equal to 0.")
+
+    if table.row_count == 0:
+        return _compute_page_layout(
+            table=table,
+            preset=preset,
+            font_size=preset.font_size,
+            start_idx=start_idx,
+        )
+
+    safe_area = preset.get_safe_area()
+    usable_h = safe_area.height - int(preset.font_size * 2.2)
+    max_candidate = calculate_adaptive_font_size(
+        available_height=usable_h,
+        row_count=table.row_count,
+        base_font_size=preset.font_size,
+    )
+
+    remaining_rows = table.row_count - start_idx
+
+    if start_idx == 0:
+        start_search = max(preset.font_size, max_candidate)
+        for cand_size in range(start_search, preset.min_font_size - 1, -1):
+            cand_layout = _compute_page_layout(
+                table=table,
+                preset=preset,
+                font_size=cand_size,
+                start_idx=0,
+            )
+            if (
+                cand_layout.page_capacity >= remaining_rows
+                and cand_layout.single_block_width <= safe_area.width
+            ):
+                return cand_layout
+
+    return _compute_page_layout(
+        table=table,
+        preset=preset,
+        font_size=preset.font_size,
+        start_idx=start_idx,
     )
