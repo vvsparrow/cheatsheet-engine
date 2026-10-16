@@ -7,6 +7,13 @@ from collections.abc import Sequence
 from PIL import ImageFont
 from PIL.ImageFont import FreeTypeFont
 
+from core.metrics import (
+    CELL_MIN_TEXT_WIDTH,
+    CELL_PAD_X_TOTAL,
+    LINE_STEP_RATIO,
+    ROW_PAD_Y_MIN,
+    ROW_PAD_Y_RATIO,
+)
 from core.models import BoundingBox, TableData
 from core.typography import wrap_text
 
@@ -15,7 +22,7 @@ def calculate_column_widths(
     table: TableData,
     font: FreeTypeFont | ImageFont.ImageFont,
     header_font: FreeTypeFont | ImageFont.ImageFont | None = None,
-    padding: int = 20,
+    padding: int = CELL_PAD_X_TOTAL,
     max_column_width: int | None = None,
     target_width: int | None = None,
 ) -> tuple[int, ...]:
@@ -70,7 +77,7 @@ def calculate_column_min_widths(
     table: TableData,
     font: FreeTypeFont | ImageFont.ImageFont,
     header_font: FreeTypeFont | ImageFont.ImageFont | None = None,
-    padding: int = 20,
+    padding: int = CELL_PAD_X_TOTAL,
 ) -> tuple[int, ...]:
     """Calculate minimum column widths based on longest words and headers.
 
@@ -184,15 +191,15 @@ def calculate_row_rendered_height(
     Returns:
         Integer pixel height of the row including internal padding.
     """
-    line_step = int(font_size * 1.45)
-    pad_y = max(4, int(font_size * 0.2))
+    line_step = int(font_size * LINE_STEP_RATIO)
+    pad_y = max(ROW_PAD_Y_MIN, int(font_size * ROW_PAD_Y_RATIO))
     num_lines = 1
     for col_idx, cell in enumerate(row):
         col_w = column_widths[col_idx] if col_idx < len(column_widths) else 100
         lines = wrap_text(
             text=cell,
             font=font,
-            max_width=max(10, col_w - 20),
+            max_width=max(CELL_MIN_TEXT_WIDTH, col_w - CELL_PAD_X_TOTAL),
         )
         num_lines = max(num_lines, len(lines))
     return num_lines * line_step + 2 * pad_y

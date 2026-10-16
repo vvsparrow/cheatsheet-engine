@@ -7,6 +7,17 @@ from PIL.ImageFont import FreeTypeFont
 
 from core.fonts import get_font
 from core.layout import calculate_page_layout
+from core.metrics import (
+    CELL_MIN_TEXT_WIDTH,
+    CELL_PAD_X,
+    CELL_PAD_X_TOTAL,
+    HEADER_LINE_OFFSET_MIN,
+    HEADER_SPACER_MIN,
+    HEADER_SPACER_RATIO,
+    LINE_STEP_RATIO,
+    ROW_PAD_Y_MIN,
+    ROW_PAD_Y_RATIO,
+)
 from core.models import BoundingBox, TableData
 from core.presets import (
     A4_LANDSCAPE,
@@ -87,14 +98,16 @@ def calculate_layout_boxes(
         for col_idx, header in enumerate(table.headers):
             boxes.append(
                 _make_text_box(
-                    x=col_x_offsets[col_idx] + 10,
+                    x=col_x_offsets[col_idx] + CELL_PAD_X,
                     y=current_y,
                     text=header,
                     font=header_font,
                 )
             )
 
-        current_y += max(36, int(layout.font_size * 1.45))
+        current_y += max(
+            HEADER_LINE_OFFSET_MIN, int(layout.font_size * LINE_STEP_RATIO)
+        )
         boxes.append(
             BoundingBox(
                 x=block_x,
@@ -103,7 +116,7 @@ def calculate_layout_boxes(
                 height=2,
             )
         )
-        current_y += max(15, int(layout.font_size * 0.5))
+        current_y += max(HEADER_SPACER_MIN, int(layout.font_size * HEADER_SPACER_RATIO))
 
         b_start = block_idx * layout.rows_per_block
         b_end = b_start + layout.rows_per_block
@@ -114,13 +127,16 @@ def calculate_layout_boxes(
                 wrap_text(
                     text=cell,
                     font=body_font,
-                    max_width=max(10, layout.single_widths[col_idx] - 20),
+                    max_width=max(
+                        CELL_MIN_TEXT_WIDTH,
+                        layout.single_widths[col_idx] - CELL_PAD_X_TOTAL,
+                    ),
                 )
                 for col_idx, cell in enumerate(row)
             ]
             num_lines = max((len(lines) for lines in row_lines), default=1)
-            line_step = int(layout.font_size * 1.45)
-            pad_y = max(4, int(layout.font_size * 0.2))
+            line_step = int(layout.font_size * LINE_STEP_RATIO)
+            pad_y = max(ROW_PAD_Y_MIN, int(layout.font_size * ROW_PAD_Y_RATIO))
             row_height = num_lines * line_step + 2 * pad_y
 
             for col_idx, lines in enumerate(row_lines):
@@ -129,7 +145,7 @@ def calculate_layout_boxes(
                         continue
                     boxes.append(
                         _make_text_box(
-                            x=col_x_offsets[col_idx] + 10,
+                            x=col_x_offsets[col_idx] + CELL_PAD_X,
                             y=current_y + pad_y + line_idx * line_step,
                             text=line,
                             font=body_font,
