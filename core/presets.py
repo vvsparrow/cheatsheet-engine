@@ -42,13 +42,13 @@ class DevicePreset:
 DESKTOP_2K = DevicePreset(
     name="Desktop 2K",
     resolution=Resolution(width=2560, height=1440),
-    safe_zone=SafeZone(top=115, bottom=112, left=260, right=60),
+    safe_zone=SafeZone(top=48, bottom=64, left=260, right=60),
 )
 
 LAPTOP_FHD = DevicePreset(
     name="Laptop Full HD",
     resolution=Resolution(width=1920, height=1080),
-    safe_zone=SafeZone(top=80, bottom=112, left=120, right=50),
+    safe_zone=SafeZone(top=40, bottom=64, left=120, right=50),
     font_size=14,
     row_height=21,
     min_font_size=12,
