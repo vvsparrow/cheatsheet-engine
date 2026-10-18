@@ -35,7 +35,7 @@ def _render_presets_and_mockups(
             output_dir=output_dir,
             theme=active_theme,
         )
-        if mockups:
+        if mockups and preset.has_mockup:
             for card_path in card_paths:
                 with Image.open(card_path) as img:
                     mockup = apply_device_overlay(image=img, preset=preset)

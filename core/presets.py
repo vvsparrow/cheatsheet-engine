@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from core.models import BoundingBox, Resolution, SafeZone
 
@@ -33,6 +34,9 @@ class DevicePreset:
     font_size: int = 18
     row_height: int = 28
     min_font_size: int = 12
+    alignment: Literal["left", "center", "right"] = "center"
+    has_mockup: bool = True
+    allow_multipage_downscale: bool = True
 
     def get_safe_area(self) -> BoundingBox:
         """Calculate the usable content area within safe margins."""
@@ -43,6 +47,7 @@ DESKTOP_2K = DevicePreset(
     name="Desktop 2K",
     resolution=Resolution(width=2560, height=1440),
     safe_zone=SafeZone(top=48, bottom=64, left=260, right=60),
+    alignment="right",
 )
 
 LAPTOP_FHD = DevicePreset(
@@ -52,6 +57,7 @@ LAPTOP_FHD = DevicePreset(
     font_size=14,
     row_height=21,
     min_font_size=12,
+    alignment="right",
 )
 
 IPAD_PORTRAIT = DevicePreset(
@@ -64,6 +70,7 @@ IPAD_PORTRAIT = DevicePreset(
 PHONE_LOCKSCREEN = DevicePreset(
     name="Phone Lockscreen",
     resolution=Resolution(width=1290, height=2796),
+    allow_multipage_downscale=False,
     safe_zone=SafeZone(
         top=int(2796 * 0.32),
         bottom=int(2796 * 0.12),
@@ -80,6 +87,7 @@ A4_PORTRAIT = DevicePreset(
     font_size=50,
     row_height=78,
     min_font_size=32,
+    has_mockup=False,
 )
 
 
@@ -90,4 +98,5 @@ A4_LANDSCAPE = DevicePreset(
     font_size=50,
     row_height=78,
     min_font_size=32,
+    has_mockup=False,
 )

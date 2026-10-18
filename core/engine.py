@@ -22,13 +22,7 @@ from core.metrics import (
 )
 from core.models import TableData
 from core.observability import MetricsCollector, RenderReport, get_logger
-from core.presets import (
-    A4_LANDSCAPE,
-    A4_PORTRAIT,
-    IPAD_PORTRAIT,
-    PHONE_LOCKSCREEN,
-    DevicePreset,
-)
+from core.presets import DevicePreset
 from core.theme import DARK_THEME, Theme
 from core.typography import wrap_text
 
@@ -105,7 +99,9 @@ def render_wallpaper(
         + (layout.num_blocks - 1) * layout.gutter
     )
 
-    if preset in (IPAD_PORTRAIT, PHONE_LOCKSCREEN, A4_PORTRAIT, A4_LANDSCAPE):
+    if preset.alignment == "right":
+        start_x = safe_area.right - total_content_w
+    elif preset.alignment == "center":
         start_x = safe_area.x + (safe_area.width - total_content_w) // 2
     else:
         start_x = safe_area.x

@@ -225,14 +225,11 @@ def apply_device_overlay(
             f"preset resolution ({preset.resolution.width}x"
             f"{preset.resolution.height})."
         )
+    if not preset.has_mockup:
+        return image.copy()
 
     overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
-
-    if preset in (DESKTOP_2K, LAPTOP_FHD):
-        _draw_desktop_taskbar(draw=draw, width=image.width, height=image.height)
-    elif preset == PHONE_LOCKSCREEN:
-        _draw_phone_lockscreen_ui(draw=draw, width=image.width, height=image.height)
 
     if preset in (DESKTOP_2K, LAPTOP_FHD):
         _draw_desktop_taskbar(draw=draw, width=image.width, height=image.height)
