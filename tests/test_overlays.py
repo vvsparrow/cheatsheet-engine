@@ -6,7 +6,7 @@ import pytest
 from PIL import Image
 
 from core.overlays import apply_device_overlay
-from core.presets import IPAD_PORTRAIT, LAPTOP_FHD, PHONE_LOCKSCREEN
+from core.presets import A4_PORTRAIT, IPAD_PORTRAIT, LAPTOP_FHD, PHONE_LOCKSCREEN
 
 
 def test_apply_device_overlay_mismatched_resolution_raises() -> None:
@@ -79,3 +79,14 @@ def test_apply_device_overlay_ipad_draws_status_and_home_bar() -> None:
     bottom_crop = result.crop((0, h - 50, w, h))
     bottom_colors = bottom_crop.getcolors(maxcolors=65536)
     assert bottom_colors is not None and len(bottom_colors) > 1
+
+
+def test_apply_device_overlay_skips_preset_without_mockup() -> None:
+    """Ensure presets with has_mockup=False return clean unmodified image."""
+    w, h = (A4_PORTRAIT.resolution.width, A4_PORTRAIT.resolution.height)
+    orig = Image.new("RGB", (w, h), color=(18, 20, 24))
+    result = apply_device_overlay(image=orig, preset=A4_PORTRAIT)
+
+    assert result.size == orig.size
+    assert result.tobytes() == orig.tobytes()
+    assert result is not orig

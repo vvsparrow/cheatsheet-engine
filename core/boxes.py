@@ -19,13 +19,7 @@ from core.metrics import (
     ROW_PAD_Y_RATIO,
 )
 from core.models import BoundingBox, TableData
-from core.presets import (
-    A4_LANDSCAPE,
-    A4_PORTRAIT,
-    IPAD_PORTRAIT,
-    PHONE_LOCKSCREEN,
-    DevicePreset,
-)
+from core.presets import DevicePreset
 from core.typography import wrap_text
 
 
@@ -80,7 +74,9 @@ def calculate_layout_boxes(
         + (layout.num_blocks - 1) * layout.gutter
     )
 
-    if preset in (IPAD_PORTRAIT, PHONE_LOCKSCREEN, A4_PORTRAIT, A4_LANDSCAPE):
+    if preset.alignment == "right":
+        start_x = safe_area.right - total_content_w
+    elif preset.alignment == "center":
         start_x = safe_area.x + (safe_area.width - total_content_w) // 2
     else:
         start_x = safe_area.x

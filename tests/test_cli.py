@@ -174,6 +174,17 @@ def test_cli_mockups_flag_generates_overlay_images(tmp_path: Path) -> None:
             assert img.mode == "RGB"
 
 
+def test_cli_mockups_flag_skips_print_presets(tmp_path: Path) -> None:
+    """Ensure --mockups flag does not generate mockup files for A4 presets."""
+    out_dir = tmp_path / "a4_wallpapers"
+    exit_code = main(
+        ["--preset", "a4_portrait", "--output-dir", str(out_dir), "--mockups"]
+    )
+    assert exit_code == 0
+    assert list(out_dir.glob("*.png"))
+    assert not list(out_dir.glob("*_mockup.png"))
+
+
 def test_cli_renders_preset_with_custom_theme(tmp_path: Path) -> None:
     """Ensure --theme flag renders wallpapers with designated color theme."""
     out_dir = tmp_path / "clinical_wallpapers"
