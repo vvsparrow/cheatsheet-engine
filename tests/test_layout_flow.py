@@ -36,7 +36,7 @@ def test_phone_lockscreen_centers_compact_card() -> None:
 
 
 def test_calculate_layout_boxes_multi_column_flow_desktop_2k() -> None:
-    """Ensure DESKTOP_2K distributes 120 rows into 3 horizontal column blocks."""
+    """Ensure DESKTOP_2K distributes 120 rows into 4 horizontal column blocks."""
     headers = ["V1", "V2", "V3", "Translation"]
     rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
     table = TableData(headers=headers, rows=rows)
@@ -45,7 +45,7 @@ def test_calculate_layout_boxes_multi_column_flow_desktop_2k() -> None:
     safe_area = DESKTOP_2K.get_safe_area()
 
     separators = [box for box in boxes if box.height == 2]
-    assert len(separators) == 3
+    assert len(separators) == 4
 
     assert separators[0].x < separators[1].x < separators[2].x
 
