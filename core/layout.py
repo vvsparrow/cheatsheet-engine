@@ -15,7 +15,6 @@ from core.columns import (
 from core.fonts import get_font
 from core.metrics import (
     CELL_PAD_X_TOTAL,
-    DEFAULT_ADAPTIVE_LINE_RATIO,
     DEFAULT_GUTTER,
     HEADER_LINE_OFFSET_MIN,
     HEADER_SPACER_MIN,
@@ -87,10 +86,9 @@ def _compute_page_layout(
     header_height = max(HEADER_LINE_OFFSET_MIN, int(font_size * LINE_STEP_RATIO)) + max(
         HEADER_SPACER_MIN, int(font_size * HEADER_SPACER_RATIO)
     )
-    effective_row_height = max(
-        preset.row_height,
-        int(font_size * DEFAULT_ADAPTIVE_LINE_RATIO),
-    )
+    scale_ratio = font_size / max(1, preset.font_size)
+    effective_row_height = max(12, round(preset.row_height * scale_ratio))
+
     rows_per_block = calculate_rows_per_page(
         safe_area=safe_area,
         row_height=effective_row_height,

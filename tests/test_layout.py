@@ -9,9 +9,9 @@ from core.columns import (
 )
 from core.fonts import get_font
 from core.geometry import assert_no_collisions
-from core.layout import calculate_page_layout
+from core.layout import _compute_page_layout, calculate_page_layout
 from core.models import BoundingBox, TableData
-from core.presets import DESKTOP_2K, LAPTOP_FHD
+from core.presets import A4_LANDSCAPE, DESKTOP_2K, LAPTOP_FHD
 
 
 def test_calculate_column_widths_respects_content_and_padding() -> None:
@@ -189,3 +189,27 @@ def test_page_layout_downscales_font_to_fit_dataset_on_single_page() -> None:
     assert layout.page_capacity == 120
     assert layout.num_blocks == 3
     assert layout.font_size < DESKTOP_2K.font_size
+
+
+def test_compute_page_layout_scales_row_height_proportionally_when_downscaling() -> (
+    None
+):
+    """Ensure row height compresses proportionally with font size without floor clamping."""
+    headers = ["Col1", "Col2"]
+    rows = [[f"A{i}", f"B{i}"] for i in range(100)]
+    table = TableData(headers=headers, rows=rows)
+
+    base_layout = _compute_page_layout(
+        table=table,
+        preset=A4_LANDSCAPE,
+        font_size=A4_LANDSCAPE.font_size,
+        start_idx=0,
+    )
+    scaled_layout = _compute_page_layout(
+        table=table,
+        preset=A4_LANDSCAPE,
+        font_size=A4_LANDSCAPE.min_font_size,
+        start_idx=0,
+    )
+
+    assert scaled_layout.rows_per_block > base_layout.rows_per_block
