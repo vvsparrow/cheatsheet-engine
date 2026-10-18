@@ -11,7 +11,13 @@ from core.fonts import get_font
 from core.geometry import assert_no_collisions
 from core.layout import _compute_page_layout, calculate_page_layout
 from core.models import BoundingBox, TableData
-from core.presets import A4_LANDSCAPE, DESKTOP_2K, LAPTOP_FHD
+from core.presets import (
+    A4_LANDSCAPE,
+    DESKTOP_2K,
+    IPAD_PORTRAIT,
+    LAPTOP_FHD,
+    PHONE_LOCKSCREEN,
+)
 
 
 def test_calculate_column_widths_respects_content_and_padding() -> None:
@@ -213,3 +219,23 @@ def test_compute_page_layout_scales_row_height_proportionally_when_downscaling()
     )
 
     assert scaled_layout.rows_per_block > base_layout.rows_per_block
+
+
+def test_page_layout_upscales_font_for_ipad_multi_column() -> None:
+    """Ensure iPad scales up typography point size above baseline."""
+    rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
+    table = TableData(headers=["V1", "V2", "V3", "Translation"], rows=rows)
+    layout = calculate_page_layout(table=table, preset=IPAD_PORTRAIT, start_idx=0)
+
+    assert layout.font_size > IPAD_PORTRAIT.font_size
+    assert layout.page_capacity == 120
+
+
+def test_page_layout_preserves_base_font_for_phone_multipage() -> None:
+    """Ensure multipage phone lockscreen preserves readable base font size."""
+    rows = [[f"v1_{i}", f"v2_{i}", f"v3_{i}", f"trans_{i}"] for i in range(120)]
+    table = TableData(headers=["V1", "V2", "V3", "Translation"], rows=rows)
+    layout = calculate_page_layout(table=table, preset=PHONE_LOCKSCREEN, start_idx=0)
+
+    assert layout.font_size == PHONE_LOCKSCREEN.font_size
+    assert layout.font_size > PHONE_LOCKSCREEN.min_font_size

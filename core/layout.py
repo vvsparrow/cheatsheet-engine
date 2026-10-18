@@ -22,10 +22,7 @@ from core.metrics import (
     LINE_STEP_RATIO,
 )
 from core.models import TableData
-from core.presets import (
-    PHONE_LOCKSCREEN,
-    DevicePreset,
-)
+from core.presets import DevicePreset
 from core.typography import calculate_adaptive_font_size
 
 
@@ -108,13 +105,14 @@ def _compute_page_layout(
         )
 
     min_gutter = DEFAULT_GUTTER
-    if preset == PHONE_LOCKSCREEN or single_block_width >= safe_area.width:
-        max_blocks = 1
-    else:
-        max_blocks = max(
-            1,
-            (safe_area.width + min_gutter) // max(1, single_block_width + min_gutter),
-        )
+    calculated_max = (safe_area.width + min_gutter) // max(
+        1, single_block_width + min_gutter
+    )
+    max_blocks = (
+        max(1, min(preset.max_blocks, calculated_max))
+        if preset.max_blocks is not None
+        else max(1, calculated_max)
+    )
 
     rough_capacity = rows_per_block * max_blocks
     page_rows = table.rows[start_idx : start_idx + rough_capacity]
@@ -206,13 +204,21 @@ def calculate_page_layout(
 
     safe_area = preset.get_safe_area()
     usable_h = safe_area.height - int(preset.font_size * 2.2)
+    base_layout = _compute_page_layout(
+        table=table,
+        preset=preset,
+        font_size=preset.font_size,
+        start_idx=start_idx,
+    )
+    remaining_rows = table.row_count - start_idx
+    rows_per_block = (remaining_rows + base_layout.num_blocks - 1) // max(
+        1, base_layout.num_blocks
+    )
     max_candidate = calculate_adaptive_font_size(
         available_height=usable_h,
-        row_count=table.row_count,
+        row_count=rows_per_block,
         base_font_size=preset.font_size,
     )
-
-    remaining_rows = table.row_count - start_idx
 
     if start_idx == 0:
         start_search = max(preset.font_size, max_candidate)
@@ -229,9 +235,12 @@ def calculate_page_layout(
             ):
                 return cand_layout
 
+    fallback_font = (
+        preset.min_font_size if preset.allow_multipage_downscale else preset.font_size
+    )
     return _compute_page_layout(
         table=table,
         preset=preset,
-        font_size=preset.min_font_size,
+        font_size=fallback_font,
         start_idx=start_idx,
     )

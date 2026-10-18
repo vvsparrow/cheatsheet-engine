@@ -37,6 +37,7 @@ class DevicePreset:
     alignment: Literal["left", "center", "right"] = "center"
     has_mockup: bool = True
     allow_multipage_downscale: bool = True
+    max_blocks: int | None = None
 
     def get_safe_area(self) -> BoundingBox:
         """Calculate the usable content area within safe margins."""
@@ -71,6 +72,7 @@ PHONE_LOCKSCREEN = DevicePreset(
     name="Phone Lockscreen",
     resolution=Resolution(width=1290, height=2796),
     allow_multipage_downscale=False,
+    max_blocks=1,
     safe_zone=SafeZone(
         top=int(2796 * 0.32),
         bottom=int(2796 * 0.12),
