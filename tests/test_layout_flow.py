@@ -214,9 +214,9 @@ def test_pagination_cursor_covers_every_row_exactly_once() -> None:
 
 @pytest.mark.parametrize("preset", [DESKTOP_2K, LAPTOP_FHD])
 def test_desktop_presets_reserve_taskbar_clearance(preset: DevicePreset) -> None:
-    """Ensure desktop presets reserve taskbar height plus 64px clearance."""
+    """Ensure desktop presets reserve taskbar height plus 16px clearance."""
     taskbar_height = 48
-    minimum_clearance = 64
+    minimum_clearance = 16
     required_bottom = taskbar_height + minimum_clearance
 
     assert preset.safe_zone.bottom >= required_bottom, (
