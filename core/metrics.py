@@ -24,12 +24,12 @@ CELL_MIN_TEXT_WIDTH: int = 10
 
 # Vertical text line rhythm and cell row padding
 LINE_STEP_RATIO: float = 1.45
-ROW_PAD_Y_MIN: int = 4
+ROW_PAD_Y_MIN: int = 3
 ROW_PAD_Y_RATIO: float = 0.2
 
 # Header section metrics and vertical dividers
-HEADER_LINE_OFFSET_MIN: int = 36
-HEADER_SPACER_MIN: int = 15
+HEADER_LINE_OFFSET_MIN: int = 18
+HEADER_SPACER_MIN: int = 8
 HEADER_SPACER_RATIO: float = 0.5
 
 # Multi-block layout spacing and typography scaling bounds
