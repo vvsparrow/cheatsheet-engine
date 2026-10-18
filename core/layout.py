@@ -121,38 +121,47 @@ def _compute_page_layout(
 
     if not page_rows:
         num_blocks = 1
+        gutter = 0
     else:
         needed = (len(page_rows) + rows_per_block - 1) // rows_per_block
         num_blocks = max(1, min(max_blocks, needed))
+        available_body_height = max(0, safe_area.height - header_height)
 
-    gutter = DEFAULT_GUTTER if num_blocks > 1 else 0
-
-    if num_blocks > 1 and page_rows:
-        rows_per_block = min(
-            rows_per_block,
-            max(1, (len(page_rows) + num_blocks - 1) // num_blocks),
-        )
-
-    available_body_height = max(0, safe_area.height - header_height)
-    if page_rows:
-        dyn_limit = rows_per_block
-        for b in range(num_blocks):
-            b_rows = page_rows[b * rows_per_block : (b + 1) * rows_per_block]
-            if not b_rows:
-                break
-            b_fit = calculate_dynamic_rows_per_block(
-                rows=b_rows,
-                font=body_font,
-                column_widths=single_widths,
-                font_size=font_size,
-                available_height=available_body_height,
-                max_rows=rows_per_block,
+        while True:
+            cur_rows_per_block = min(
+                rows_per_block,
+                max(1, (len(page_rows) + num_blocks - 1) // num_blocks),
             )
-            dyn_limit = min(dyn_limit, b_fit)
+            dyn_limit = cur_rows_per_block
+            overflow = False
+            for b in range(num_blocks):
+                b_rows = page_rows[
+                    b * cur_rows_per_block : (b + 1) * cur_rows_per_block
+                ]
+                if not b_rows:
+                    break
+                b_fit = calculate_dynamic_rows_per_block(
+                    rows=b_rows,
+                    font=body_font,
+                    column_widths=single_widths,
+                    font_size=font_size,
+                    available_height=available_body_height,
+                    max_rows=cur_rows_per_block,
+                )
+                if b_fit < len(b_rows):
+                    overflow = True
+                    dyn_limit = min(dyn_limit, b_fit)
 
-        if dyn_limit < rows_per_block:
-            rows_per_block = max(1, dyn_limit)
-            page_rows = table.rows[start_idx : start_idx + rows_per_block * num_blocks]
+            if not overflow:
+                rows_per_block = cur_rows_per_block
+                break
+            if num_blocks >= max_blocks:
+                rows_per_block = max(1, dyn_limit)
+                break
+            num_blocks += 1
+
+        gutter = DEFAULT_GUTTER if num_blocks > 1 else 0
+        page_rows = table.rows[start_idx : start_idx + rows_per_block * num_blocks]
 
     return PageLayout(
         single_widths=single_widths,
