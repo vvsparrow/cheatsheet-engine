@@ -67,8 +67,8 @@ def test_multi_column_flow_uses_fixed_compact_gutter() -> None:
     assert actual_gap == 24
 
 
-def test_multi_column_group_aligns_to_right_of_safe_area() -> None:
-    """Ensure column blocks align to the right edge of desktop safe area."""
+def test_multi_column_group_aligns_to_left_of_safe_area() -> None:
+    """Ensure column blocks align to the left edge of desktop safe area."""
     headers = ["Command", "Description"]
     rows = [[f"cmd_{i}", f"desc_{i}"] for i in range(20)]
     table = TableData(headers=headers, rows=rows)
@@ -77,7 +77,7 @@ def test_multi_column_group_aligns_to_right_of_safe_area() -> None:
     safe_area = DESKTOP_2K.get_safe_area()
     separators = [box for box in boxes if box.height == 2]
 
-    assert separators[-1].right == safe_area.right
+    assert separators[0].x == safe_area.x
 
 
 def test_laptop_fhd_fits_three_column_blocks() -> None:

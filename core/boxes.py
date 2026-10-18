@@ -83,7 +83,7 @@ def calculate_layout_boxes(
     if preset in (IPAD_PORTRAIT, PHONE_LOCKSCREEN, A4_PORTRAIT, A4_LANDSCAPE):
         start_x = safe_area.x + (safe_area.width - total_content_w) // 2
     else:
-        start_x = safe_area.right - total_content_w
+        start_x = safe_area.x
 
     for block_idx in range(layout.num_blocks):
         block_x = start_x + block_idx * (layout.single_block_width + layout.gutter)
