@@ -232,6 +232,6 @@ def calculate_page_layout(
     return _compute_page_layout(
         table=table,
         preset=preset,
-        font_size=preset.font_size,
+        font_size=preset.min_font_size,
         start_idx=start_idx,
     )
