@@ -108,7 +108,7 @@ def render_wallpaper(
     if preset in (IPAD_PORTRAIT, PHONE_LOCKSCREEN, A4_PORTRAIT, A4_LANDSCAPE):
         start_x = safe_area.x + (safe_area.width - total_content_w) // 2
     else:
-        start_x = safe_area.right - total_content_w
+        start_x = safe_area.x
 
     max_y = safe_area.y
     for block_idx in range(layout.num_blocks):
